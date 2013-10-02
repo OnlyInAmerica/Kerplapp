@@ -1,13 +1,16 @@
 package net.binaryparadox.kerplapp;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.zip.ZipEntry;
+import java.util.Locale;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
@@ -34,6 +37,71 @@ import net.binaryparadox.kerplapp.Utils.CommaSeparatedList;
 
 public class KerplappRepo
 {
+  private static final String TAG = KerplappRepo.class.getCanonicalName();
+
+  private PackageManager pm = null;
+  private List<App> apps = null;
+  
+  private File xmlIndex = null;
+  private File webRoot = null;
+  private File repoDir = null;
+  
+  public KerplappRepo(Context c)
+  {
+    webRoot = c.getFilesDir();
+    pm =  c.getPackageManager();
+  }
+  
+  public File getRepoDir()
+  {
+    return repoDir;
+  }
+  
+  public File getIndex()
+  {
+    return xmlIndex;
+  }
+  
+  public int init() throws Exception
+  {
+    apps = scanForApps();
+    
+    File repoDir = new File(webRoot, "repo");
+    
+    if(!repoDir.exists())
+      if(!repoDir.mkdir())
+        throw new IllegalStateException("Unable to create empty repo/ directory");
+    
+    xmlIndex = new File(repoDir, "index.xml");
+    
+    if(!xmlIndex.exists())
+      if(!xmlIndex.createNewFile())
+        throw new IllegalStateException("Unable to create empty index.xml file");
+    
+    if(apps.size() > 0)
+    {
+      writeIndexXML();
+      copyApksToRepo();
+    }
+    
+    return apps.size();
+  }
+  
+  public void copyApksToRepo()
+  {
+    for(App app : apps)
+    {
+      for(Apk apk : app.apks)
+      {
+        File outFile = new File(repoDir, apk.id);
+        if(!copyFile(apk.apkName, outFile))
+        {
+          throw new IllegalStateException("Unable to copy APK");
+        }
+      }
+    }
+  }
+
   
   public static boolean hasApi(int apiLevel) {
       return Build.VERSION.SDK_INT >= apiLevel;
@@ -43,7 +111,37 @@ public class KerplappRepo
       return Build.VERSION.SDK_INT;
   }
   
-  public List<KerplappRepo.App> scanForApps(PackageManager pm) throws NameNotFoundException, ZipException, IOException
+  public static boolean copyFile(String inFile, File out) {
+    byte[] buf = new byte[1024];
+    int readBytes;
+    InputStream  inStream = null;
+    OutputStream outStream = null;
+   
+    try {
+      inStream = new FileInputStream(inFile);
+    } catch(IOException e) {
+      Log.e(TAG, e.getMessage());
+      return false;
+    }
+    
+    try{
+      
+      outStream = new FileOutputStream(out);
+
+
+      while ((readBytes = inStream.read(buf)) > 0) {
+        outStream.write(buf, 0, readBytes);
+      }
+      inStream.close();
+      outStream.close();
+      return true;
+    } catch (IOException e) {
+      Log.e(TAG, e.getMessage());
+      return false;
+    } 
+  }
+  
+  public List<KerplappRepo.App> scanForApps() throws NameNotFoundException, ZipException, IOException
   {    
     List<ApplicationInfo> apps =
         pm.getInstalledApplications(PackageManager.GET_META_DATA);
@@ -80,16 +178,19 @@ public class KerplappRepo
       apkOb.detail_hash = Utils.getBinaryHash(apkFile);
       apkOb.added = new Date(pkgInfo.lastUpdateTime);
       apkOb.apkName = apkFile.getAbsolutePath();
+      apkOb.id = appOb.id;
+      apkOb.file = apkFile;
       
       Signature[]        sigs     = pkgInfo.signatures;
       apkOb.sig = Utils.hashBytes(sigs[0].toByteArray());
 
       appOb.apks.add(apkOb);
       installedAppObs.add(appOb);
+           
      
-      File pubSourceDir = new File(a.publicSourceDir);
+      ZipFile z= new ZipFile(a.publicSourceDir);
       
-      ZipFile z= new ZipFile(pubSourceDir);
+      /*
       Enumeration<? extends ZipEntry> entries = z.entries();
        
       while(entries.hasMoreElements())
@@ -99,13 +200,14 @@ public class KerplappRepo
         //Log.i(TAG, "--- ---- ----- "+ e.getName());
       }
       //ZipEntry mani = z.getEntry("AndroidManifest.xml");
-                   
+      */              
     }
     
     return installedAppObs;
   }
+  
 
-  public void buildIndexXML(List<App> apps, File outFile) throws Exception
+  public void writeIndexXML() throws Exception
   {  
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = factory.newDocumentBuilder();
@@ -124,7 +226,7 @@ public class KerplappRepo
     repoDesc.setTextContent("A repo generated from apps installed on an Android Device");
     repo.appendChild(repoDesc);
     
-    SimpleDateFormat dateToStr = new SimpleDateFormat("y-M-d");
+    SimpleDateFormat dateToStr = new SimpleDateFormat("y-M-d", Locale.US);
     for(App a : apps)
     {
       Element app = doc.createElement("application");
@@ -202,11 +304,9 @@ public class KerplappRepo
     Transformer transformer = transformerFactory.newTransformer();
     
     DOMSource domSource = new DOMSource(doc);
-    StreamResult result = new StreamResult(outFile);
+    StreamResult result = new StreamResult(xmlIndex);
     
     transformer.transform(domSource, result);
-    
-    Log.i("kerplapp", "********** " + outFile.getAbsolutePath());
   }
   
   public String pubkey; // null for an unsigned repo
@@ -322,6 +422,8 @@ public class KerplappRepo
   }
  
   public static class Apk {
+    public File file;
+
     public Apk() {
         detail_size = 0;
         added = null;

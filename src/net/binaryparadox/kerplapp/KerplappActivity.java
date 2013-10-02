@@ -1,24 +1,11 @@
 package net.binaryparadox.kerplapp;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
+import java.util.Locale;
 
-import net.binaryparadox.kerplapp.KerplappRepo.Apk;
+import fi.iki.elonen.SimpleWebServer;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.pm.Signature;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
@@ -30,10 +17,8 @@ public class KerplappActivity extends Activity
 {
     private static final String TAG = PackageReceiver.class.getCanonicalName();
     
-    private final KerplappRepo repo = new KerplappRepo();
+    private KerplappRepo repo = null;
     
-    private PackageManager pm;
-
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) 
@@ -41,33 +26,27 @@ public class KerplappActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
          
-        final Button b = (Button) findViewById(R.id.plopBtn);
+        final Button b = (Button) findViewById(R.id.plopBtn);      
+        final Context ctx = getApplicationContext();
         
-        final Context ctx = this.getApplicationContext();
-        pm = ctx.getPackageManager();
+        if(repo == null)
+          repo = new KerplappRepo(ctx);
         
         b.setOnClickListener(new View.OnClickListener() {
           @Override
           public void onClick(View v)
           {
+            Toast toast = Toast.makeText(v.getContext().getApplicationContext(),
+                                           "Building Repo", Toast.LENGTH_SHORT);
+              
             try
             {
-              Toast toast = Toast.makeText(v.getContext().getApplicationContext(),
-                                           "Scanning", 10);
-                          
-              toast.show();
-              
-              List<KerplappRepo.App> apps = repo.scanForApps(pm);
-              
-              File indexFile = new File(ctx.getFilesDir(), "index.xml");
-              repo.buildIndexXML(apps, indexFile);
-              
-              ///data/data/net.binaryparadox.kerplapp/files/index.xml
-              Log.i(TAG,"*************** "+ ctx.getFilesDir().toString() + "/index.xml");
-              
+              repo.init();
             } catch (Exception e) {
-              e.printStackTrace();
+              Log.e(TAG, e.getMessage());
             }
+            
+            toast.show();
           } 
         });
         
@@ -81,16 +60,18 @@ public class KerplappActivity extends Activity
             {
               WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
               int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
-              final String formatedIpAddress = String.format("%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
+              final String formatedIpAddress = String.format(Locale.CANADA, "%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
               (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
 
               Toast toast = Toast.makeText(v.getContext().getApplicationContext(),
                   "Please access! http://" + formatedIpAddress + ":"+ 8888,
-                  10);
+                  Toast.LENGTH_SHORT);
               toast.show();
 
-              KerplappHTTPD server = new KerplappHTTPD(8888);
-              server.start();
+              SimpleWebServer kerplappSrv = new SimpleWebServer(formatedIpAddress, 8888, 
+                                                                ctx.getFilesDir(), false);
+           
+              kerplappSrv.start();
             } catch(Exception e) {
               Log.e(TAG, e.getMessage());
             }
