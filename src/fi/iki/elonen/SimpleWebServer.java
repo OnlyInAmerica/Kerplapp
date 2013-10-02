@@ -455,7 +455,11 @@ public class SimpleWebServer extends NanoHTTPD {
         List<String> files = Arrays.asList(f.list(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                return new File(dir, name).isFile();
+            		System.out.println(name);
+            		File f = new File(dir, name);
+            		boolean result = f.isFile();
+                //return new File(dir, name).isFile();
+            		return result;
             }
         }));
         Collections.sort(files);

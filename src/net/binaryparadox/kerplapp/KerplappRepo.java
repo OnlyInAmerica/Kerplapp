@@ -77,6 +77,11 @@ public class KerplappRepo
     if(!xmlIndex.exists())
       if(!xmlIndex.createNewFile())
         throw new IllegalStateException("Unable to create empty index.xml file");
+      
+    Log.i(TAG, xmlIndex.getAbsolutePath());
+    // /data/app\
+    
+    ///data/data/net.binaryparadox.kerplapp/files/repo/index.xml
     
     if(apps.size() > 0)
     {
