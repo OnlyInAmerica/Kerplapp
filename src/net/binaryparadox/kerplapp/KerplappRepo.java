@@ -66,7 +66,7 @@ public class KerplappRepo
   {
     apps = scanForApps();
     
-    File repoDir = new File(webRoot, "repo");
+    repoDir = new File(webRoot, "repo");
     
     if(!repoDir.exists())
       if(!repoDir.mkdir())

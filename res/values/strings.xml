@@ -4,5 +4,8 @@
     <string name="hello">P L O P</string>
     <string name="app_name">Kerplapp</string>
     <string name="contact">Questions? Comments? Please contact dbarrera@ccsl.carleton.ca</string>
+    <string name="title_activity_app_select">Build Local Repo</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
 
 </resources>
