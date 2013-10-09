@@ -2,22 +2,29 @@ package net.binaryparadox.kerplapp;
 
 import java.util.Locale;
 
+import net.binaryparadox.kerplapp.KerplappRepo.ScanListener;
+
 import fi.iki.elonen.SimpleWebServer;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+@SuppressLint("DefaultLocale")
 public class KerplappActivity extends Activity 
 {
     private static final String TAG = PackageReceiver.class.getCanonicalName();
-    
-    private KerplappRepo repo = null;
+    private ProgressDialog repoProgress;
     
     /** Called when the activity is first created. */
     @Override
@@ -28,25 +35,12 @@ public class KerplappActivity extends Activity
          
         final Button b = (Button) findViewById(R.id.plopBtn);      
         final Context ctx = getApplicationContext();
-        
-        if(repo == null)
-          repo = new KerplappRepo(ctx);
-        
+                
         b.setOnClickListener(new View.OnClickListener() {
           @Override
           public void onClick(View v)
-          {
-            Toast toast = Toast.makeText(v.getContext().getApplicationContext(),
-                                           "Building Repo", Toast.LENGTH_SHORT);
-              
-            try
-            {
-              repo.init();
-            } catch (Exception e) {
-              Log.e(TAG, e.getMessage());
-            }
-            
-            toast.show();
+          {        
+            new ScanForAppsTask().execute();
           } 
         });
         
@@ -79,5 +73,74 @@ public class KerplappActivity extends Activity
         });
     }
     
+    @Override
+    protected Dialog onCreateDialog(int id) {
+      switch (id) {
+        case 0:
+          repoProgress = new ProgressDialog(this);
+          repoProgress.setMessage("Scanning Apps. Please wait...");
+          repoProgress.setIndeterminate(false);
+          repoProgress.setMax(100);
+          repoProgress.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+          repoProgress.setCancelable(false);
+          repoProgress.show();
+          return repoProgress;
+        default:
+          return null;
+      }
+    }
+    
+  public class ScanForAppsTask extends AsyncTask<String, String, String> implements ScanListener
+  {
+    @Override
+    protected void onPreExecute()
+    {
+      super.onPreExecute();
+      showDialog(0);
+    }
+
+    /**
+     * Downloading file in background thread
+     * */
+    @Override
+    protected String doInBackground(String... arg)
+    {
+      try
+      {
+        KerplappApplication appCtx = (KerplappApplication) getApplication();
+        KerplappRepo repo = appCtx.getRepo();
+        repo.scanForApps(this);   
+      } catch (Exception e) {
+        Log.e("Error: ", e.getMessage());
+      }
+      return null;
+    }
+
+    /**
+     * Updating progress bar
+     * */
+    protected void onProgressUpdate(String... progress)
+    {
+      // setting progress percentage
+      repoProgress.setProgress(Integer.parseInt(progress[0]));
+    }
+
+    @Override
+    protected void onPostExecute(String file_url)
+    {
+      dismissDialog(0);
+      Intent i = new Intent(getApplicationContext(), AppSelectActivity.class);
+      startActivity(i);
+    }
+
+    @Override
+    public void processedApp(String pkgName, int index, int total)
+    {
+      float progress = index / (float) total;
+      int progressPercent = (int) (progress * 100);
+      publishProgress(String.valueOf(progressPercent));
+    }
+
+  }
   
 }

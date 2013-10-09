@@ -15,6 +15,7 @@
 
     <application
         android:allowBackup="false"
+        android:name="net.binaryparadox.kerplapp.KerplappApplication"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name" >
         <activity
@@ -41,7 +42,7 @@
         </receiver>
 
         <activity
-            android:name="net.binaryparadox.kerplapp.AppSelect"
+            android:name="net.binaryparadox.kerplapp.AppSelectActivity"
             android:label="@string/title_activity_app_select"
             android:parentActivityName="net.binaryparadox.kerplapp.KerplappActivity" >
             <meta-data
