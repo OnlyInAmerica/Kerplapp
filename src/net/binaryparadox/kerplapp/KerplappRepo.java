@@ -1,5 +1,7 @@
 package net.binaryparadox.kerplapp;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -11,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
@@ -45,6 +49,7 @@ public class KerplappRepo
   private List<App> apps = null;
   
   private File xmlIndex = null;
+  private File xmlIndexJar = null;
   private File webRoot = null;
   private File repoDir = null;
   
@@ -73,6 +78,7 @@ public class KerplappRepo
         throw new IllegalStateException("Unable to create empty repo/ directory");
     
     xmlIndex = new File(repoDir, "index.xml");
+    xmlIndexJar = new File(repoDir, "index.jar");
     
     if(!xmlIndex.exists())
       if(!xmlIndex.createNewFile())
@@ -94,13 +100,14 @@ public class KerplappRepo
   {
     copyApksToRepo(apps);
   }
+  
   public void copyApksToRepo(List<App> appsToCopy)
   {
     for(App app : appsToCopy)
     {
       for(Apk apk : app.apks)
       {
-        File outFile = new File(repoDir, apk.id);
+        File outFile = new File(repoDir, apk.id +".apk");
         if(!copyFile(apk.apkName, outFile))
         {
           throw new IllegalStateException("Unable to copy APK");
@@ -341,6 +348,28 @@ public class KerplappRepo
     StreamResult result = new StreamResult(xmlIndex);
     
     transformer.transform(domSource, result);
+  }
+  
+  public void writeIndexJar() throws IOException
+  {
+    BufferedOutputStream bo = new BufferedOutputStream(new FileOutputStream(xmlIndexJar));
+    JarOutputStream jo = new JarOutputStream(bo);
+
+    BufferedInputStream bi = new BufferedInputStream(new FileInputStream(xmlIndex));
+
+    JarEntry je = new JarEntry("index.xml");
+    jo.putNextEntry(je);
+
+    byte[] buf = new byte[1024];
+    int bytesRead;
+         
+    while ((bytesRead = bi.read(buf)) != -1) {
+      jo.write(buf, 0, bytesRead);
+    }
+
+    bi.close();
+    jo.close();
+    bo.close();
   }
   
   public String pubkey; // null for an unsigned repo

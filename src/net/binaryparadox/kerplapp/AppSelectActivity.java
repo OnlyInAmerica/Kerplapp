@@ -53,6 +53,7 @@ public class AppSelectActivity extends Activity {
         try
         {
           repo.writeIndexXML(checked);
+          repo.writeIndexJar();
           repo.copyApksToRepo(checked);
          
           Toast toast = Toast.makeText(v.getContext().getApplicationContext(),

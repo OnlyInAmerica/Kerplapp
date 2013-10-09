@@ -11,14 +11,12 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import net.binaryparadox.kerplapp.KerplappRepo.App;
 
 public class AppListAdapter extends ArrayAdapter<App>
 {
   public  ArrayList<App> appList;
-  private Context        ctx;
   private Activity       activity;
 
   public AppListAdapter(Activity activity, Context context, 
@@ -27,7 +25,6 @@ public class AppListAdapter extends ArrayAdapter<App>
     super(context, textViewResourceId, appList);
     this.appList = new ArrayList<App>();
     this.appList.addAll(appList);
-    this.ctx = context;
     this.activity = activity;
   }
 
