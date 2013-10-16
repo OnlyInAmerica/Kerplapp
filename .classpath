@@ -12,5 +12,7 @@
 	<classpathentry exported="true" kind="lib" path="lib/zipsigner-lib-1.18-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/nanohttpd-webserver-2.0.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/nanohttpd-2.0.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/kellinwood-logging-android-1.5-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/kellinwood-logging-lib-1.2-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="bin/classes"/>
 </classpath>
