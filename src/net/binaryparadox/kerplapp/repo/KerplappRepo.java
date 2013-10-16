@@ -55,8 +55,8 @@ public class KerplappRepo
   private File xmlIndex = null;
   private File xmlIndexJar = null;
   private File xmlIndexJarUnsigned = null;
-  private File webRoot = null;
-  private File repoDir = null;
+  public File webRoot = null;
+  public File repoDir = null;
   
   public KerplappRepo(Context c)
   {

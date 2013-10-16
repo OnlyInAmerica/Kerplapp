@@ -1,11 +1,25 @@
 package net.binaryparadox.kerplapp;
 
+import java.io.File;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Locale;
 
+import javax.net.ssl.SSLServerSocketFactory;
+
+import net.binaryparadox.kerplapp.repo.Crypto;
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
 import net.binaryparadox.kerplapp.repo.KerplappRepo.ScanListener;
 
+import fi.iki.elonen.NanoHTTPD;
+import fi.iki.elonen.ServerRunner;
 import fi.iki.elonen.SimpleWebServer;
 
 import android.annotation.SuppressLint;
@@ -64,10 +78,46 @@ public class KerplappActivity extends Activity
                   Toast.LENGTH_SHORT);
               toast.show();
 
-              SimpleWebServer kerplappSrv = new SimpleWebServer(formatedIpAddress, 8888, 
-                                                                ctx.getFilesDir(), false);
-           
-              kerplappSrv.start();
+              Runnable webServer = new Runnable()
+              {
+								@Override
+								public void run() {
+									 SimpleWebServer kerplappSrv = new SimpleWebServer(formatedIpAddress, 8888, 
+                       ctx.getFilesDir(), false);
+									 
+									 try {
+										String jksPath = new File(ctx.getFilesDir(), "keystore.jks").getAbsolutePath();
+										String password = Crypto.KEYSTORE_PASS;
+										
+										KeyStore store = Crypto.createKeyStore(new File(jksPath));
+										
+										SSLServerSocketFactory factory = NanoHTTPD.makeSSLSocketFactory(jksPath, password.toCharArray());
+										kerplappSrv.makeSecure(factory); 
+										kerplappSrv.start();
+										
+									} catch (IOException e) {
+										e.printStackTrace();
+									} catch (InvalidKeyException e) {
+										e.printStackTrace();
+									} catch (KeyStoreException e) {
+										e.printStackTrace();
+									} catch (NoSuchAlgorithmException e) {
+										e.printStackTrace();
+									} catch (CertificateException e) {
+										e.printStackTrace();
+									} catch (IllegalStateException e) {
+										e.printStackTrace();
+									} catch (NoSuchProviderException e) {
+										e.printStackTrace();
+									} catch (SignatureException e) {
+										e.printStackTrace();
+									}
+								}
+              	
+              };
+             
+              Thread webServerThread = new Thread(webServer);
+              webServerThread.start();
             } catch(Exception e) {
               Log.e(TAG, e.getMessage());
             }

@@ -1,5 +1,7 @@
 package net.binaryparadox.kerplapp.repo;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidKeyException;
@@ -23,13 +25,20 @@ import org.spongycastle.x509.X509V3CertificateGenerator;
 
 public class Crypto
 {
+	//TODO: this is clearly not a suitable way to deal with a password of any sort. LOL
+	public static final String KEYSTORE_PASS = "omghardcodedcredentials";
+	public static final String KEY_ALIAS     = "sslkey";
+	
   static {
     Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
   }
   
-  public KeyStore createKeyStore() throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, InvalidKeyException, IllegalStateException, NoSuchProviderException, SignatureException
+  public static KeyStore createKeyStore(File f) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, InvalidKeyException, IllegalStateException, NoSuchProviderException, SignatureException
   {
-    
+    //TODO:move to non-deprecated methods. Verify correctness of parameters/settings
+  	
+  	//Potentially dangerous proof of concept crypto code.... YAY
+  	
     KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
     keyPairGenerator.initialize(2048);
     KeyPair keyPair = keyPairGenerator.generateKeyPair();
@@ -51,9 +60,10 @@ public class Crypto
     
     KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
     
-    ks.load(null, "ahhh".toCharArray());
-    ks.setKeyEntry("key1", (Key)keyPair.getPrivate(), "ahhh".toCharArray(), certChain); 
+    ks.load(null, KEYSTORE_PASS.toCharArray());
+    ks.setKeyEntry(KEY_ALIAS, (Key)keyPair.getPrivate(), KEYSTORE_PASS.toCharArray(), certChain); 
     
+    ks.store(new FileOutputStream(f), KEYSTORE_PASS.toCharArray());
     return ks;
   }
   
