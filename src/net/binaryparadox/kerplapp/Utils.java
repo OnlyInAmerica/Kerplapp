@@ -6,9 +6,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Iterator;
 
-import android.text.TextUtils.SimpleStringSplitter;
 import android.util.Log;
 
 /**
@@ -19,19 +17,13 @@ import android.util.Log;
 public class Utils
 {
   private static final String TAG                   = Utils.class.getCanonicalName();
-  private static final String HASH_ALGO             = "SHA1";
 
-  
-  /**
-   * Computes a hash of the provided byte array, returning it in hex string format.
-   * @param input an array of bytes to hash.
-   * @return a base 16 string of hexadecimal digits.
-   */
-  public static String hashBytes(byte[] input)
+
+  public static String hashBytes(byte[] input, String algo)
   {    
     try
     {
-      MessageDigest md        = MessageDigest.getInstance(HASH_ALGO);
+      MessageDigest md        = MessageDigest.getInstance(algo);
       byte[]        hashBytes = md.digest(input);     
       String        hash      = toHexString(hashBytes);
       
@@ -42,7 +34,7 @@ public class Utils
       return null;
     }
   }
-
+   
   /**
    * Computes the SHA1 hash of a binary file.
    * @param apkPath the path to a binary file to hash.
@@ -50,12 +42,16 @@ public class Utils
    */ 
   public static String getBinaryHash(File apk)
   {
+    return getBinaryHash(apk, "SHA1");
+  }
+  
+  public static String getBinaryHash(File apk, String algo)
+  {
+    FileInputStream fis = null;
     try
     {
-      //Note: didn't use sha1Hash() here as we're blocking 1024 bytes at a time
-      //into the MessageDigest rather than feeding it a stable byte array
-      MessageDigest md = MessageDigest.getInstance("SHA1");
-      FileInputStream fis = new FileInputStream(apk);
+      MessageDigest md = MessageDigest.getInstance(algo);
+      fis = new FileInputStream(apk);
       
       byte[] dataBytes = new byte[1024];
       int nread = 0;
@@ -71,6 +67,10 @@ public class Utils
     } catch (NoSuchAlgorithmException e) {
       Log.e(TAG, "Device does not support SHA1 MessageDisgest algorithm");
       return null;
+    } finally {
+      if(fis != null)
+        try { fis.close(); } 
+        catch(IOException e) { return null; }
     }
   }
   
@@ -83,34 +83,5 @@ public class Utils
   {
     BigInteger bi = new BigInteger(1, bytes);
     return String.format("%0" + (bytes.length << 1) + "X", bi);
-  }
-  
-  public static class CommaSeparatedList implements Iterable<String> {
-    private String value;
-
-    private CommaSeparatedList(String list) {
-        value = list;
-    }
-
-    public static CommaSeparatedList make(String list) {
-        if (list == null || list.length() == 0)
-            return null;
-        else
-            return new CommaSeparatedList(list);
-    }
-
-    public static String str(CommaSeparatedList instance) {
-        return (instance == null ? null : instance.toString());
-    }
-
-    public String toString() {
-        return value;
-    }
-
-    public Iterator<String> iterator() {
-        SimpleStringSplitter splitter = new SimpleStringSplitter(',');
-        splitter.setString(value);
-        return splitter.iterator();
-    }
   }
 }

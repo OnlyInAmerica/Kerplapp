@@ -12,18 +12,16 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
-import net.binaryparadox.kerplapp.KerplappRepo.App;
-
-public class AppListAdapter extends ArrayAdapter<App>
+public class AppListAdapter extends ArrayAdapter<AppListEntry>
 {
-  public  ArrayList<App> appList;
-  private Activity       activity;
+  public  ArrayList<AppListEntry> appList;
+  private Activity                activity;
 
   public AppListAdapter(Activity activity, Context context, 
-                        int textViewResourceId, ArrayList<App> appList)
+                        int textViewResourceId, ArrayList<AppListEntry> appList)
   {
     super(context, textViewResourceId, appList);
-    this.appList = new ArrayList<App>();
+    this.appList = new ArrayList<AppListEntry>();
     this.appList.addAll(appList);
     this.activity = activity;
   }
@@ -55,23 +53,24 @@ public class AppListAdapter extends ArrayAdapter<App>
         public void onClick(View v)
         {
           CheckBox cb = (CheckBox) v;
-          App app = (App) cb.getTag();
+          AppListEntry app = (AppListEntry) cb.getTag();
+          app.setChecked(cb.isChecked());
+          
           /*
           Toast.makeText(ctx, "Clicked on Checkbox: " + cb.getText() + " is " + cb.isChecked(),
               Toast.LENGTH_LONG).show();
           */
-          app.includeInRepo = cb.isChecked();
         }
       });
     } else {
       holder = (ViewHolder) convertView.getTag();
     }
 
-    App app = appList.get(position);
-    holder.appName.setText(app.name);
-    holder.appPkg.setText(app.id);
+    AppListEntry app = appList.get(position);
+    holder.appName.setText(app.getAppName());
+    holder.appPkg.setText(app.getPkgName());
     holder.appPkg.setTag(app);
-    holder.appPkg.setChecked(app.includeInRepo);
+    holder.appPkg.setChecked(app.isChecked());
 
     return convertView;
   }

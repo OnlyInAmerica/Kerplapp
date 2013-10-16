@@ -1,8 +1,10 @@
 package net.binaryparadox.kerplapp;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
-import net.binaryparadox.kerplapp.KerplappRepo.ScanListener;
+import net.binaryparadox.kerplapp.repo.KerplappRepo;
+import net.binaryparadox.kerplapp.repo.KerplappRepo.ScanListener;
 
 import fi.iki.elonen.SimpleWebServer;
 
@@ -90,7 +92,7 @@ public class KerplappActivity extends Activity
       }
     }
     
-  public class ScanForAppsTask extends AsyncTask<String, String, String> implements ScanListener
+  public class ScanForAppsTask extends AsyncTask<String, String, ArrayList<AppListEntry>> implements ScanListener
   {
     @Override
     protected void onPreExecute()
@@ -103,13 +105,13 @@ public class KerplappActivity extends Activity
      * Downloading file in background thread
      * */
     @Override
-    protected String doInBackground(String... arg)
+    protected ArrayList<AppListEntry> doInBackground(String... arg)
     {
       try
       {
         KerplappApplication appCtx = (KerplappApplication) getApplication();
         KerplappRepo repo = appCtx.getRepo();
-        repo.scanForApps(this);   
+        return repo.loadInstalledPackageNames(this);   
       } catch (Exception e) {
         Log.e("Error: ", e.getMessage());
       }
@@ -126,10 +128,11 @@ public class KerplappActivity extends Activity
     }
 
     @Override
-    protected void onPostExecute(String file_url)
+    protected void onPostExecute(ArrayList<AppListEntry> pkgs)
     {
       dismissDialog(0);
       Intent i = new Intent(getApplicationContext(), AppSelectActivity.class);
+      i.putParcelableArrayListExtra("packages", pkgs);
       startActivity(i);
     }
 

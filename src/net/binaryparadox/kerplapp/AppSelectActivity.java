@@ -18,11 +18,10 @@ import android.widget.Toast;
 import android.annotation.TargetApi;
 import android.os.Build;
 
-import net.binaryparadox.kerplapp.KerplappRepo.App;
+import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
 public class AppSelectActivity extends Activity {
   private final String TAG = AppSelectActivity.class.getName();
-  private List<App> apps = null;
   private AppListAdapter dataAdapter = null;
 
 	@Override
@@ -32,7 +31,7 @@ public class AppSelectActivity extends Activity {
 		// Show the Up button in the action bar.
 		setupActionBar();
 		
-    final KerplappApplication appCtx = (KerplappApplication) getApplication();
+		final KerplappApplication appCtx = (KerplappApplication) getApplication();
     final KerplappRepo repo = appCtx.getRepo();
 		
     final Button b = (Button) findViewById(R.id.repoCreateBtn);      
@@ -40,21 +39,23 @@ public class AppSelectActivity extends Activity {
       @Override
       public void onClick(View v)
       {
-        ArrayList<App> appList = dataAdapter.appList;
+        ArrayList<AppListEntry> appList = dataAdapter.appList;
+        ArrayList<AppListEntry> checked = new ArrayList<AppListEntry>();
         
-        ArrayList<App> checked = new ArrayList<App>();
-        
-        for(App a : appList)
+        for(AppListEntry a : appList)
         {
-          if(a.includeInRepo)
+          if(a.isChecked())
             checked.add(a);
         }
         
         try
         {
-          repo.writeIndexXML(checked);
+          for(AppListEntry e : checked)
+            repo.addAppToRepo(e.getPkgName());
+          
+          repo.writeIndexXML();
           repo.writeIndexJar();
-          repo.copyApksToRepo(checked);
+          repo.copyApksToRepo();
          
           Toast toast = Toast.makeText(v.getContext().getApplicationContext(),
               "Repo Created",
@@ -66,11 +67,12 @@ public class AppSelectActivity extends Activity {
       }
     });
 		
-	  if(repo != null && repo.getApps() !=  null && repo.getApps().size() > 1)
-	  {
-	    apps = repo.getApps();
-	    displayListView();
-	  }
+	  
+    Bundle extras = getIntent().getExtras(); 
+    
+    List<AppListEntry> installedPackages = extras.getParcelableArrayList("packages");
+    
+    displayListView(installedPackages);
 	}
 
 	/**
@@ -100,10 +102,10 @@ public class AppSelectActivity extends Activity {
 	}
 	
 
-	private void displayListView() 
-	{  
+	private void displayListView(List<AppListEntry> installedPackages) 
+	{ 
 	  dataAdapter = new AppListAdapter(this, this.getApplicationContext(), R.layout.app_select_info, 
-	      (ArrayList<App>) apps);
+	      (ArrayList<AppListEntry>) installedPackages);
 	  ListView listView = (ListView) findViewById(R.id.appListView);
 	  listView.setAdapter(dataAdapter);
 	  listView.setOnItemClickListener(new OnItemClickListener() {

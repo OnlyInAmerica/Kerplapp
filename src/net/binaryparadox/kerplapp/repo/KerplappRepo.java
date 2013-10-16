@@ -1,4 +1,4 @@
-package net.binaryparadox.kerplapp;
+package net.binaryparadox.kerplapp.repo;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -11,12 +11,13 @@ import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import java.util.zip.ZipException;
-import java.util.zip.ZipFile;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -25,31 +26,35 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import kellinwood.security.zipsigner.ZipSigner;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.FeatureInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.AsyncTask;
 import android.os.Build;
-import android.os.Handler.Callback;
 import android.util.Log;
 
-import net.binaryparadox.kerplapp.Utils.CommaSeparatedList;
+import net.binaryparadox.kerplapp.AppListEntry;
+import net.binaryparadox.kerplapp.Utils;
 
 public class KerplappRepo
 {
   private static final String TAG = KerplappRepo.class.getCanonicalName();
 
   private PackageManager pm = null;
-  private List<App> apps = null;
+  
+  private Map<String, App> apps = new HashMap<String, App>();
   
   private File xmlIndex = null;
   private File xmlIndexJar = null;
+  private File xmlIndexJarUnsigned = null;
   private File webRoot = null;
   private File repoDir = null;
   
@@ -79,6 +84,7 @@ public class KerplappRepo
     
     xmlIndex = new File(repoDir, "index.xml");
     xmlIndexJar = new File(repoDir, "index.jar");
+    xmlIndexJarUnsigned = new File(repoDir, "index.unsigned.jar");
     
     if(!xmlIndex.exists())
       if(!xmlIndex.createNewFile())
@@ -98,24 +104,25 @@ public class KerplappRepo
   
   public void copyApksToRepo()
   {
-    copyApksToRepo(apps);
+    copyApksToRepo(new ArrayList<String>(apps.keySet()));
   }
   
-  public void copyApksToRepo(List<App> appsToCopy)
+  public void copyApksToRepo(List<String> appsToCopy)
   {
-    for(App app : appsToCopy)
+    for(String pkg : appsToCopy)
     {
+      App app = apps.get(pkg);
+      
       for(Apk apk : app.apks)
       {
         File outFile = new File(repoDir, apk.id +".apk");
-        if(!copyFile(apk.apkName, outFile))
+        if(!copyFile(apk.apkPath, outFile))
         {
           throw new IllegalStateException("Unable to copy APK");
         }
       }
     }
   }
-
   
   public static boolean hasApi(int apiLevel) {
       return Build.VERSION.SDK_INT >= apiLevel;
@@ -160,66 +167,94 @@ public class KerplappRepo
     public void processedApp(String pkgName, int index, int total);
   }
   
-  public void scanForApps() throws NameNotFoundException, ZipException, IOException
+  public ArrayList<AppListEntry> loadInstalledPackageNames()
   {
-    scanForApps(null);
+    return loadInstalledPackageNames(null);
   }
-  
-  public void scanForApps(ScanListener callback) throws NameNotFoundException, ZipException, IOException
-  {    
+
+  public ArrayList<AppListEntry> loadInstalledPackageNames(ScanListener callback)
+  {
     List<ApplicationInfo> apps =
         pm.getInstalledApplications(PackageManager.GET_META_DATA);
     
     if(apps == null || apps.size() == 0)
-      return;
-        
-    List<KerplappRepo.App> installedAppObs = new java.util.ArrayList<KerplappRepo.App>();
+      return null;
+    
+    ArrayList<AppListEntry> installedPkgs = new ArrayList<AppListEntry>();
     
     for(int i = 0; i < apps.size(); i++)
     {
       ApplicationInfo a = apps.get(i);
-      PackageInfo pkgInfo  = pm.getPackageInfo(a.packageName, PackageManager.GET_SIGNATURES);   
-      KerplappRepo.App appOb = new KerplappRepo.App();
       
-      appOb.name = (String) a.loadLabel(pm);
-      appOb.summary = (String) a.loadDescription(pm);
-      appOb.icon = a.loadIcon(pm).toString();    
-      appOb.id = a.packageName;    
-      appOb.added = new Date(pkgInfo.firstInstallTime);
-      appOb.lastUpdated = new Date(pkgInfo.lastUpdateTime);
-      appOb.apks = new ArrayList<Apk>();
+      String pkgName = a.packageName;
+      String appName = (String) a.loadLabel(pm);
       
-      File apkFile = new File(a.publicSourceDir);     
-      KerplappRepo.Apk apkOb = new KerplappRepo.Apk();
-      apkOb.version = pkgInfo.versionName;
-      apkOb.vercode = pkgInfo.versionCode;
-      apkOb.detail_hashType = "SHA1";
-      apkOb.detail_hash = Utils.getBinaryHash(apkFile);
-      apkOb.added = new Date(pkgInfo.lastUpdateTime);
-      apkOb.apkName = apkFile.getAbsolutePath();
-      apkOb.id = appOb.id;
-      apkOb.file = apkFile;
-      
-      Signature[]        sigs     = pkgInfo.signatures;
-      apkOb.sig = Utils.hashBytes(sigs[0].toByteArray());
-      
-      appOb.apks.add(apkOb);
-      
-      if(!validApp(appOb))
-        continue;
-      
-      installedAppObs.add(appOb);   
+      installedPkgs.add(new AppListEntry(pkgName, appName, false));
       
       if(callback != null)
-        callback.processedApp(appOb.id, i, apps.size());
+        callback.processedApp(pkgName, i, apps.size());
     }
 
-    this.apps = installedAppObs;
+    return installedPkgs;
   }
   
-  public List<App> getApps()
+  public App addAppToRepo(String pkgName) throws NameNotFoundException
   {
-    return this.apps;
+    ApplicationInfo a = pm.getApplicationInfo(pkgName, PackageManager.GET_META_DATA);
+    PackageInfo pkgInfo  = pm.getPackageInfo(pkgName, PackageManager.GET_SIGNATURES | PackageManager.GET_PERMISSIONS);   
+    App appOb = new App();
+    
+    appOb.name = (String) a.loadLabel(pm);
+    appOb.summary = (String) a.loadDescription(pm);
+    appOb.icon = a.loadIcon(pm).toString();    
+    appOb.id = a.packageName;    
+    appOb.added = new Date(pkgInfo.firstInstallTime);
+    appOb.lastUpdated = new Date(pkgInfo.lastUpdateTime);
+    appOb.apks = new ArrayList<Apk>();
+    
+    //TODO: use pm.getInstallerPackageName(packageName) for something
+    
+    File apkFile = new File(a.publicSourceDir);     
+    Apk apkOb = new Apk();
+    apkOb.version = pkgInfo.versionName;
+    apkOb.vercode = pkgInfo.versionCode;
+    apkOb.detail_hashType = "sha256";
+    apkOb.detail_hash = Utils.getBinaryHash(apkFile, apkOb.detail_hashType);
+    apkOb.added = new Date(pkgInfo.lastUpdateTime);
+    apkOb.apkPath = apkFile.getAbsolutePath();
+    apkOb.apkName = apkFile.getName();
+    apkOb.minSdkVersion = a.targetSdkVersion;
+    apkOb.id = appOb.id;
+    apkOb.file = apkFile;
+    apkOb.detail_permissions = pkgInfo.requestedPermissions;
+    
+    FeatureInfo[] features = pkgInfo.reqFeatures;
+    
+    if(features != null && features.length > 0)
+    {
+      String[] featureNames = new String[features.length];
+      
+      for(int i = 0; i < features.length; i++)
+        featureNames[i] = features[i].name;
+      
+      apkOb.features = featureNames;
+    }
+    
+    Signature[]        sigs     = pkgInfo.signatures;
+    apkOb.sig = Utils.hashBytes(sigs[0].toByteArray(), "sha1");
+    
+    appOb.apks.add(apkOb);
+    
+    if(!validApp(appOb))
+      return null;
+    
+    apps.put(pkgName, appOb);
+    return appOb;
+  }
+  
+  public List<String> getInstalledPkgNames()
+  {
+    return new ArrayList<String>(this.apps.keySet());
   }
   
   public boolean validApp(App a)
@@ -244,11 +279,6 @@ public class KerplappRepo
   }
 
   public void writeIndexXML() throws Exception
-  {
-    writeIndexXML(apps);
-  }
-
-  public void writeIndexXML(List<App> appsToWrite) throws Exception
   {  
     DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     DocumentBuilder builder = factory.newDocumentBuilder();
@@ -268,8 +298,9 @@ public class KerplappRepo
     repo.appendChild(repoDesc);
     
     SimpleDateFormat dateToStr = new SimpleDateFormat("y-M-d", Locale.US);
-    for(App a : appsToWrite)
+    for(Entry<String,App> entry : apps.entrySet())
     {
+      App a = entry.getValue();
       Element app = doc.createElement("application");
       app.setAttribute("id", a.id);
       
@@ -290,13 +321,44 @@ public class KerplappRepo
       app.appendChild(name);
       
       Element summary = doc.createElement("summary");
-      summary.setTextContent(a.detail_description);
+      summary.setTextContent(a.name);
       app.appendChild(summary);
+      
+      Element description = doc.createElement("description");
+      description.setTextContent(a.name);
+      app.appendChild(description);
+      
+      Element desc        = doc.createElement("desc");
+      desc.setTextContent(a.name);
+      app.appendChild(desc);
       
       Element icon = doc.createElement("icon");
       icon.setTextContent(a.icon);
       app.appendChild(icon);
       
+      Element license = doc.createElement("license");
+      app.appendChild(license);
+      
+      Element category = doc.createElement("category");
+      category.setTextContent("Kerplapp");
+      app.appendChild(category);
+      
+      Element web = doc.createElement("web");
+      app.appendChild(web);
+      
+      Element source = doc.createElement("source");
+      app.appendChild(source);
+      
+      Element tracker = doc.createElement("tracker");
+      app.appendChild(tracker);
+      
+      Element marketVersion = doc.createElement("marketversion");
+      app.appendChild(marketVersion);
+      
+      Element marketVerCode = doc.createElement("marketversioncode");
+      marketVerCode.setTextContent("0");
+      app.appendChild(marketVerCode);
+            
       for(Apk apk : a.apks)
       {
         Element packageNode = doc.createElement("package");
@@ -326,6 +388,7 @@ public class KerplappRepo
         packageNode.appendChild(size);
         
         Element sdkver = doc.createElement("sdkver");
+        sdkver.setTextContent(String.valueOf(apk.minSdkVersion));
         packageNode.appendChild(sdkver);
         
         Element apkAdded = doc.createElement("added");
@@ -333,7 +396,38 @@ public class KerplappRepo
         packageNode.appendChild(apkAdded);
         
         Element features = doc.createElement("features");
+        if(apk.features != null && apk.features.length > 0)
+        {
+          StringBuilder buff = new StringBuilder();
+          
+          for(int i = 0; i < apk.features.length; i++)
+          {
+            buff.append(apk.features[i]);
+            
+            if(i != apk.features.length - 1)
+              buff.append(",");
+          }
+          
+          features.setTextContent(buff.toString());
+        }
         packageNode.appendChild(features);
+        
+        Element permissions = doc.createElement("permissions");
+        if(apk.detail_permissions != null && apk.detail_permissions.length > 0)
+        {
+          StringBuilder buff = new StringBuilder();
+          
+          for(int i = 0; i < apk.detail_permissions.length; i++)
+          {
+            buff.append(apk.detail_permissions[i]);
+            
+            if(i != apk.detail_permissions.length - 1)
+              buff.append(",");
+          }
+          
+          permissions.setTextContent(buff.toString());
+        }
+        packageNode.appendChild(permissions);
         
         app.appendChild(packageNode);
       }
@@ -352,7 +446,7 @@ public class KerplappRepo
   
   public void writeIndexJar() throws IOException
   {
-    BufferedOutputStream bo = new BufferedOutputStream(new FileOutputStream(xmlIndexJar));
+    BufferedOutputStream bo = new BufferedOutputStream(new FileOutputStream(xmlIndexJarUnsigned));
     JarOutputStream jo = new JarOutputStream(bo);
 
     BufferedInputStream bi = new BufferedInputStream(new FileInputStream(xmlIndex));
@@ -370,149 +464,26 @@ public class KerplappRepo
     bi.close();
     jo.close();
     bo.close();
-  }
+
+    // Sign with the built-in default test key/certificate.
+      ZipSigner zipSigner;
+      try
+      {
+        zipSigner = new ZipSigner();
+        zipSigner.setKeymode("testkey");
+        zipSigner.signZip(xmlIndexJarUnsigned.getAbsolutePath(), xmlIndexJar.getAbsolutePath());
+        
+        Log.i(TAG, xmlIndexJar.getAbsolutePath());
+        Log.i(TAG, "Signed zip");
+      } catch(Throwable t) {
+        t.printStackTrace();
+        Log.e(TAG, t.getMessage());
+      }
+    
+  }  
   
   public String pubkey; // null for an unsigned repo
   
-  public static class App implements Comparable<App> {
-    public App() {
-        name = "Unknown";
-        summary = "Unknown application";
-        icon = "noicon.png";
-        id = "unknown";
-        license = "Unknown";
-        category = "Uncategorized";
-        detail_trackerURL = null;
-        detail_sourceURL = null;
-        detail_donateURL = null;
-        detail_webURL = null;
-        antiFeatures = null;
-        requirements = null;
-        added = null;
-        lastUpdated = null;
-        apks = new ArrayList<Apk>();
-    }
-    
-    public boolean includeInRepo = false;
-
-    public String id;
-    public String name;
-    public String summary;
-    public String icon;
-
-    // Null when !detail_Populated
-    public String detail_description;
-
-    public String license;
-    public String category;
-
-    // Null when !detail_Populated
-    public String detail_webURL;
-
-    // Null when !detail_Populated
-    public String detail_trackerURL;
-
-    // Null when !detail_Populated
-    public String detail_sourceURL;
-
-    // Donate link, or null
-    // Null when !detail_Populated
-    public String detail_donateURL;
-
-    public String curVersion;
-    public int curVercode;
-    public Date added;
-    public Date lastUpdated;
-
-    // Installed version (or null) and version code. These are valid only
-    // when getApps() has been called with getinstalledinfo=true.
-    public String installedVersion;
-    public int installedVerCode;
-
-    // List of anti-features (as defined in the metadata
-    // documentation) or null if there aren't any.
-    public CommaSeparatedList antiFeatures;
-
-    // List of special requirements (such as root privileges) or
-    // null if there aren't any.
-    public CommaSeparatedList requirements;
-
-    // True if there are new versions (apks) that the user hasn't
-    // explicitly ignored. (We're currently not using the database
-    // field for this - we make the decision on the fly in getApps().
-    public boolean hasUpdates;
-
-    // The name of the version that would be updated to.
-    public String updateVersion;
-
-    // Used internally for tracking during repo updates.
-    public boolean updated;
-
-    // List of apks.
-    public List<Apk> apks;
-
-    // Get the current version - this will be one of the Apks from 'apks'.
-    // Can return null if there are no available versions.
-    // This should be the 'current' version, as in the most recent stable
-    // one, that most users would want by default. It might not be the
-    // most recent, if for example there are betas etc.
-    public Apk getCurrentVersion() {
-
-        // Try and return the real current version first...
-        if (curVersion != null && curVercode > 0) {
-            for (Apk apk : apks) {
-                if (apk.vercode == curVercode)
-                    return apk;
-            }
-        }
-
-        // If we don't know the current version, or we don't have it, we
-        // return the most recent version we have...
-        int latestcode = -1;
-        Apk latestapk = null;
-        for (Apk apk : apks) {
-            if (apk.vercode > latestcode) {
-                latestapk = apk;
-                latestcode = apk.vercode;
-            }
-        }
-        return latestapk;
-    }
-
-    @Override
-    public int compareTo(App arg0) {
-        return name.compareToIgnoreCase(arg0.name);
-    }
-
-  }
- 
-  public static class Apk {
-    public File file;
-
-    public Apk() {
-        detail_size = 0;
-        added = null;
-        detail_hash = null;
-        detail_hashType = null;
-        detail_permissions = null;
-    }
-
-    public String id;
-    public String version;
-    public int vercode;
-    public int detail_size; // Size in bytes - 0 means we don't know!
-    public String detail_hash;
-    public String detail_hashType;
-    public int minSdkVersion; // 0 if unknown
-    public Date added;
-    public CommaSeparatedList detail_permissions; // null if empty or
-                                                  // unknown
-    public CommaSeparatedList features; // null if empty or unknown
-
-    // ID (md5 sum of public key) of signature. Might be null, in the
-    // transition to this field existing.
-    public String sig;
-
-    public String apkName;
-  }
+  
+  
 }
