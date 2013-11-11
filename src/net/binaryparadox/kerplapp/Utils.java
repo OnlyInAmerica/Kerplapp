@@ -1,13 +1,13 @@
 package net.binaryparadox.kerplapp;
 
+import android.util.Log;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-
-import android.util.Log;
 
 /**
  * The UAppIDUtils class provides static utility methods for calculating application UAppID's.

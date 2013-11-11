@@ -1,5 +1,8 @@
 package net.binaryparadox.kerplapp.repo;
 
+import org.spongycastle.jce.X509Principal;
+import org.spongycastle.x509.X509V3CertificateGenerator;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,10 +21,6 @@ import java.security.SignatureException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.util.Date;
-
-import org.spongycastle.jce.X509Principal;
-import org.spongycastle.x509.X509V1CertificateGenerator;
-import org.spongycastle.x509.X509V3CertificateGenerator;
 
 public class Crypto
 {

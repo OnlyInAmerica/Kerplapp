@@ -1,7 +1,5 @@
 package net.binaryparadox.kerplapp;
 
-import java.util.ArrayList;
-
 import android.app.Activity;
 import android.content.Context;
 import android.util.Log;
@@ -11,6 +9,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 public class AppListAdapter extends ArrayAdapter<AppListEntry>
 {

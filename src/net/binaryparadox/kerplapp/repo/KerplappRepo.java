@@ -1,5 +1,20 @@
 package net.binaryparadox.kerplapp.repo;
 
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.FeatureInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Build;
+import android.util.Log;
+
+import net.binaryparadox.kerplapp.AppListEntry;
+import net.binaryparadox.kerplapp.Utils;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -30,22 +45,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import kellinwood.security.zipsigner.ZipSigner;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
-import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.FeatureInfo;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.Signature;
-import android.content.pm.PackageManager.NameNotFoundException;
-import android.os.Build;
-import android.util.Log;
-
-import net.binaryparadox.kerplapp.AppListEntry;
-import net.binaryparadox.kerplapp.Utils;
 
 public class KerplappRepo
 {

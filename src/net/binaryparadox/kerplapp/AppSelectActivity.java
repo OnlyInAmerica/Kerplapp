@@ -1,10 +1,9 @@
 package net.binaryparadox.kerplapp;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import android.os.Bundle;
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,10 +14,11 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
-import android.annotation.TargetApi;
-import android.os.Build;
 
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class AppSelectActivity extends Activity {
   private final String TAG = AppSelectActivity.class.getName();

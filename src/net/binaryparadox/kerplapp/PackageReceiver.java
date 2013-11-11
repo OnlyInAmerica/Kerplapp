@@ -1,10 +1,8 @@
 package net.binaryparadox.kerplapp;
 
-import net.binaryparadox.kerplapp.Utils;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-
 import android.util.Log;
 import android.widget.Toast;
 

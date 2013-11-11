@@ -1,8 +1,9 @@
 package net.binaryparadox.kerplapp;
 
-import net.binaryparadox.kerplapp.repo.KerplappRepo;
 import android.app.Application;
 import android.util.Log;
+
+import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
 public class KerplappApplication extends Application
 {
