@@ -8,6 +8,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -17,6 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -240,9 +243,61 @@ public class KerplappRepo
       apkOb.features = featureNames;
     }
     
-    Signature[]        sigs     = pkgInfo.signatures;
-    apkOb.sig = Utils.hashBytes(sigs[0].toByteArray(), "sha1");
-    
+    //Signature[]        sigs     = pkgInfo.signatures;  
+   
+    byte[] rawCertBytes;
+    try
+    {
+      JarFile apkJar = new JarFile(apkFile);
+      JarEntry aSignedEntry = (JarEntry) apkJar.getEntry("AndroidManifest.xml");  
+      
+      if(aSignedEntry == null) 
+        return null;
+      
+      InputStream tmpIn = apkJar.getInputStream(aSignedEntry);
+      byte[] buff = new byte[2048];
+      while(tmpIn.read(buff, 0, buff.length) != -1)
+      { 
+        //NOP - apparently have to READ from the JarEntry before you can call
+        //      getCerficates() and have it return != null. Yay Java.
+      }
+      tmpIn.close();
+           
+      if(aSignedEntry.getCertificates() == null || aSignedEntry.getCertificates().length == 0)
+        return null;
+      
+      Certificate signer = aSignedEntry.getCertificates()[0];
+      rawCertBytes = signer.getEncoded();
+      
+      apkJar.close();
+      
+      /*
+       * I don't fully understand the loop used here. I've copied it verbatim from
+       * getsig.java bundled with FDroidServer. I *believe* it is taking the raw byte
+       * encoding of the certificate & converting it to a byte array of the hex 
+       * representation of the original certificat byte array. This is then MD5 sum'd.
+       * It's a really bad way to be doing this if I'm right... If I'm not right, I really
+       * don't know!
+       * 
+       * see lines 67->75 in getsig.java bundled with Fdroidserver
+       */
+      byte[] fdroidSig = new byte[rawCertBytes.length * 2];
+      for(int j = 0; j < rawCertBytes.length; j++)
+      {
+        byte v = rawCertBytes[j];
+        int d = (v >> 4) & 0xF;
+        fdroidSig[j*2] = (byte)(d >= 10 ? ('a' + d - 10) : ('0' + d));
+        d = v & 0xF;
+        fdroidSig[j*2+1] = (byte)(d >= 10 ? ('a' + d - 10) : ('0' + d));
+      } 
+      apkOb.sig = Utils.hashBytes(fdroidSig, "md5");
+      
+    } catch (CertificateEncodingException e) {
+      return null;
+    } catch (IOException e) {
+      return null;
+    }
+   
     appOb.apks.add(apkOb);
     
     if(!validApp(appOb))
