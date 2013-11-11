@@ -91,8 +91,8 @@ public class KerplappActivity extends Activity
 										
 										KeyStore store = Crypto.createKeyStore(new File(jksPath));
 										
-										SSLServerSocketFactory factory = NanoHTTPD.makeSSLSocketFactory(jksPath, password.toCharArray());
-										kerplappSrv.makeSecure(factory); 
+										//SSLServerSocketFactory factory = NanoHTTPD.makeSSLSocketFactory(jksPath, password.toCharArray());
+										//kerplappSrv.makeSecure(factory); 
 										kerplappSrv.start();
 										
 									} catch (IOException e) {
