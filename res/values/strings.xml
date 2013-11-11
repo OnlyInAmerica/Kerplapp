@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <string name="app_name">Kerplapp</string>
     <string name="title_activity_app_select">Build Local Repo</string>
     <string name="action_settings">Settings</string>

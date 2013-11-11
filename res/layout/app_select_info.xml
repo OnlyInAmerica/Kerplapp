@@ -2,9 +2,9 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical" 
+    android:orientation="vertical"
     android:padding="6dip" >
-    
+
     <CheckBox
         android:id="@+id/appCheckbox"
         android:layout_width="wrap_content"
@@ -12,8 +12,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:focusable="false"
-        android:focusableInTouchMode="false"
-        />
+        android:focusableInTouchMode="false" />
 
     <TextView
         android:id="@+id/appName"
@@ -22,7 +21,6 @@
         android:layout_alignLeft="@+id/appCheckbox"
         android:layout_alignParentRight="true"
         android:layout_below="@+id/appCheckbox"
-        android:layout_marginLeft="32dp"
-        />
+        android:layout_marginLeft="32dp" />
 
 </RelativeLayout>
