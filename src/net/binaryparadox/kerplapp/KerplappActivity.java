@@ -42,6 +42,8 @@ public class KerplappActivity extends Activity
     private static final String TAG = PackageReceiver.class.getCanonicalName();
     private ProgressDialog repoProgress;
     
+    private File app_keystore;
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) 
@@ -50,6 +52,8 @@ public class KerplappActivity extends Activity
         setContentView(R.layout.main);
          
         final Button b = (Button) findViewById(R.id.plopBtn);      
+        app_keystore = getDir("keystore", Context.MODE_PRIVATE);
+
         final Context ctx = getApplicationContext();
                 
         b.setOnClickListener(new View.OnClickListener() {
@@ -86,7 +90,7 @@ public class KerplappActivity extends Activity
                        ctx.getFilesDir(), false);
 									 
 									 try {
-										String jksPath = new File(ctx.getFilesDir(), "keystore.jks").getAbsolutePath();
+										String jksPath = new File(app_keystore, "keystore.jks").getAbsolutePath();
 										String password = Crypto.KEYSTORE_PASS;
 										
 										KeyStore store = Crypto.createKeyStore(new File(jksPath));
