@@ -8,14 +8,21 @@
         android:id="@+id/plopBtn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0.50"
+        android:layout_weight="0.33"
         android:text="Create a Repo" />
 
     <Button
         android:id="@+id/startBtn"
         android:layout_width="match_parent"
-        android:layout_height="204dp"
-        android:layout_weight="0.15"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.33"
         android:text="Host Repo" />
+
+    <Button
+        android:id="@+id/toFdroidBtn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.33"
+        android:text="Send to F-Droid" />
 
 </LinearLayout>

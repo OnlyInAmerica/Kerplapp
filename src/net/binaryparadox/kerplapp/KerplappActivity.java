@@ -28,6 +28,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -41,7 +42,8 @@ public class KerplappActivity extends Activity
 {
     private static final String TAG = PackageReceiver.class.getCanonicalName();
     private ProgressDialog repoProgress;
-    
+
+    private String uriString = null;
     private File app_keystore;
 
     /** Called when the activity is first created. */
@@ -77,8 +79,9 @@ public class KerplappActivity extends Activity
               final String formatedIpAddress = String.format(Locale.CANADA, "%d.%d.%d.%d", (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
               (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
 
+              uriString = "http://" + formatedIpAddress + ":8888/repo";
               Toast toast = Toast.makeText(v.getContext().getApplicationContext(),
-                  "Please access! http://" + formatedIpAddress + ":"+ 8888,
+                  "Please access! " + uriString,
                   Toast.LENGTH_SHORT);
               toast.show();
 
@@ -125,6 +128,18 @@ public class KerplappActivity extends Activity
             } catch(Exception e) {
               Log.e(TAG, e.getMessage());
             }
+          }
+        });
+        final Button sendToFDroid = (Button) findViewById(R.id.toFdroidBtn);
+        sendToFDroid.setOnClickListener(new View.OnClickListener() {
+          @Override
+          public void onClick(View v)
+          {
+              if (uriString != null) {
+                  Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriString));
+                  intent.setClassName("org.fdroid.fdroid", "org.fdroid.fdroid.ManageRepo");
+                  startActivity(intent);
+              }
           }
         });
     }
