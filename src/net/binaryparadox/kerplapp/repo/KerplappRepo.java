@@ -118,7 +118,7 @@ public class KerplappRepo
       
       for(Apk apk : app.apks)
       {
-        File outFile = new File(repoDir, apk.id +".apk");
+        File outFile = new File(repoDir, apk.apkName);
         if(!copyFile(apk.apkPath, outFile))
         {
           throw new IllegalStateException("Unable to copy APK");
