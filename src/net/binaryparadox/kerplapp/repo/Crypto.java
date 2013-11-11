@@ -1,3 +1,4 @@
+
 package net.binaryparadox.kerplapp.repo;
 
 import org.spongycastle.jce.X509Principal;
@@ -24,47 +25,55 @@ import java.util.Date;
 
 public class Crypto
 {
-	//TODO: this is clearly not a suitable way to deal with a password of any sort. LOL
-	public static final String KEYSTORE_PASS = "omghardcodedcredentials";
-	public static final String KEY_ALIAS     = "sslkey";
-	
-  static {
-    Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
-  }
-  
-  public static KeyStore createKeyStore(File f) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException, InvalidKeyException, IllegalStateException, NoSuchProviderException, SignatureException
-  {
-    //TODO:move to non-deprecated methods. Verify correctness of parameters/settings
-  	
-  	//Potentially dangerous proof of concept crypto code.... YAY
-  	
-    KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-    keyPairGenerator.initialize(2048);
-    KeyPair keyPair = keyPairGenerator.generateKeyPair();
+    // TODO: this is clearly not a suitable way to deal with a password of any
+    // sort. LOL
+    public static final String KEYSTORE_PASS = "omghardcodedcredentials";
+    public static final String KEY_ALIAS = "sslkey";
 
-    Date now = new Date();
+    static {
+        Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
+    }
 
-    X509V3CertificateGenerator cert = new X509V3CertificateGenerator();   
-    cert.setSerialNumber(BigInteger.valueOf(1));   //or generate a random number  
-    cert.setSubjectDN(new X509Principal("CN=localhost"));  //see examples to add O,OU etc  
-    cert.setIssuerDN(new X509Principal("CN=localhost")); //same since it is self-signed  
-    cert.setPublicKey(keyPair.getPublic());  
-    cert.setNotBefore(now);  
-    cert.setNotAfter(new Date(now.getTime() + (10000 * 60 * 60 * 24 * 360)));
-    cert.setSignatureAlgorithm("SHA1WithRSAEncryption");   
-    PrivateKey signingKey = keyPair.getPrivate();    
-    
-    Certificate[] certChain = new Certificate[1];  
-    certChain[0] = cert.generate(signingKey, "BC"); ;  
-    
-    KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
-    
-    ks.load(null, KEYSTORE_PASS.toCharArray());
-    ks.setKeyEntry(KEY_ALIAS, (Key)keyPair.getPrivate(), KEYSTORE_PASS.toCharArray(), certChain); 
-    
-    ks.store(new FileOutputStream(f), KEYSTORE_PASS.toCharArray());
-    return ks;
-  }
-  
+    public static KeyStore createKeyStore(File f) throws KeyStoreException,
+            NoSuchAlgorithmException, CertificateException, IOException, InvalidKeyException,
+            IllegalStateException, NoSuchProviderException, SignatureException
+    {
+        // TODO:move to non-deprecated methods. Verify correctness of
+        // parameters/settings
+
+        // Potentially dangerous proof of concept crypto code.... YAY
+
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048);
+        KeyPair keyPair = keyPairGenerator.generateKeyPair();
+
+        Date now = new Date();
+
+        X509V3CertificateGenerator cert = new X509V3CertificateGenerator();
+        cert.setSerialNumber(BigInteger.valueOf(1)); // or generate a random
+                                                     // number
+        cert.setSubjectDN(new X509Principal("CN=localhost")); // see examples to
+                                                              // add O,OU etc
+        cert.setIssuerDN(new X509Principal("CN=localhost")); // same since it is
+                                                             // self-signed
+        cert.setPublicKey(keyPair.getPublic());
+        cert.setNotBefore(now);
+        cert.setNotAfter(new Date(now.getTime() + (10000 * 60 * 60 * 24 * 360)));
+        cert.setSignatureAlgorithm("SHA1WithRSAEncryption");
+        PrivateKey signingKey = keyPair.getPrivate();
+
+        Certificate[] certChain = new Certificate[1];
+        certChain[0] = cert.generate(signingKey, "BC");
+        ;
+
+        KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+
+        ks.load(null, KEYSTORE_PASS.toCharArray());
+        ks.setKeyEntry(KEY_ALIAS, (Key) keyPair.getPrivate(), KEYSTORE_PASS.toCharArray(),
+                certChain);
+
+        ks.store(new FileOutputStream(f), KEYSTORE_PASS.toCharArray());
+        return ks;
+    }
 
 }
