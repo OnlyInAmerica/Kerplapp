@@ -274,8 +274,8 @@ public class KerplappRepo
       /*
        * I don't fully understand the loop used here. I've copied it verbatim from
        * getsig.java bundled with FDroidServer. I *believe* it is taking the raw byte
-       * encoding of the certificate & converting it to a byte array of the hex 
-       * representation of the original certificat byte array. This is then MD5 sum'd.
+       * encoding of the certificate & converting it to a byte array of the hex
+       * representation of the original certificate byte array. This is then MD5 sum'd.
        * It's a really bad way to be doing this if I'm right... If I'm not right, I really
        * don't know!
        * 
@@ -345,19 +345,22 @@ public class KerplappRepo
     Element repo = doc.createElement("repo");
     repo.setAttribute("icon", "blah.png");
     repo.setAttribute("name", "Kerplapp Repo");
-    repo.setAttribute("url", "http://localhost:8888");
+    repo.setAttribute("url", "http://localhost:8888"); // TODO replace with real IP addr
     rootElement.appendChild(repo);
     
     Element repoDesc = doc.createElement("description");
     repoDesc.setTextContent("A repo generated from apps installed on an Android Device");
     repo.appendChild(repoDesc);
     
-    SimpleDateFormat dateToStr = new SimpleDateFormat("y-M-d", Locale.US);
+    SimpleDateFormat dateToStr = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
     for(Entry<String,App> entry : apps.entrySet())
     {
+      String latestVersion = "0";
+      String latestVerCode = "0";
       App a = entry.getValue();
       Element app = doc.createElement("application");
       app.setAttribute("id", a.id);
+      rootElement.appendChild(app);
       
       Element appID = doc.createElement("id");
       appID.setTextContent(a.id);
@@ -383,7 +386,7 @@ public class KerplappRepo
       description.setTextContent(a.name);
       app.appendChild(description);
       
-      Element desc        = doc.createElement("desc");
+      Element desc = doc.createElement("desc");
       desc.setTextContent(a.name);
       app.appendChild(desc);
       
@@ -392,10 +395,15 @@ public class KerplappRepo
       app.appendChild(icon);
       
       Element license = doc.createElement("license");
+      license.setTextContent("Unknown");
       app.appendChild(license);
       
+      Element categories = doc.createElement("categories");
+      categories.setTextContent("Kerplapp"); //TODO also add hostname/IP comma-separated
+      app.appendChild(categories);
+
       Element category = doc.createElement("category");
-      category.setTextContent("Kerplapp");
+      category.setTextContent("Kerplapp"); //TODO also add hostname/IP comma-separated
       app.appendChild(category);
       
       Element web = doc.createElement("web");
@@ -410,8 +418,7 @@ public class KerplappRepo
       Element marketVersion = doc.createElement("marketversion");
       app.appendChild(marketVersion);
       
-      Element marketVerCode = doc.createElement("marketversioncode");
-      marketVerCode.setTextContent("0");
+      Element marketVerCode = doc.createElement("marketvercode");
       app.appendChild(marketVerCode);
             
       for(Apk apk : a.apks)
@@ -419,27 +426,32 @@ public class KerplappRepo
         Element packageNode = doc.createElement("package");
         
         Element version = doc.createElement("version");
+        latestVersion = apk.version;
         version.setTextContent(apk.version);
         packageNode.appendChild(version);
         
-        Element versionCode = doc.createElement("versionCode");
-        versionCode.setTextContent(String.valueOf(apk.vercode));
-        packageNode.appendChild(versionCode);
-        
+
+        // F-Droid unfortunately calls versionCode versioncode...
+        Element versioncode = doc.createElement("versioncode");
+        latestVerCode = String.valueOf(apk.vercode);
+        versioncode.setTextContent(latestVerCode);
+        packageNode.appendChild(versioncode);
+
         Element apkname = doc.createElement("apkname");
         apkname.setTextContent(apk.apkName);
         packageNode.appendChild(apkname);
         
         Element hash = doc.createElement("hash");
         hash.setAttribute("type", apk.detail_hashType);
-        hash.setTextContent(apk.detail_hash);
+        hash.setTextContent(apk.detail_hash.toLowerCase(Locale.US));
         packageNode.appendChild(hash);
         
         Element sig = doc.createElement("sig");
-        sig.setTextContent(apk.sig);
+        sig.setTextContent(apk.sig.toLowerCase(Locale.US));
         packageNode.appendChild(sig);
         
         Element size = doc.createElement("size");
+        size.setTextContent(String.valueOf(apk.file.length()));
         packageNode.appendChild(size);
         
         Element sdkver = doc.createElement("sdkver");
@@ -474,8 +486,8 @@ public class KerplappRepo
           
           for(int i = 0; i < apk.detail_permissions.length; i++)
           {
-            buff.append(apk.detail_permissions[i]);
-            
+            buff.append(apk.detail_permissions[i].replace("android.permission.", ""));
+
             if(i != apk.detail_permissions.length - 1)
               buff.append(",");
           }
@@ -486,8 +498,10 @@ public class KerplappRepo
         
         app.appendChild(packageNode);
       }
-      
-      rootElement.appendChild(app);
+
+      // now mark the latest version in the feed for this particular app
+      marketVersion.setTextContent(latestVersion);
+      marketVerCode.setTextContent(latestVerCode);
     }
       
     TransformerFactory transformerFactory = TransformerFactory.newInstance();
