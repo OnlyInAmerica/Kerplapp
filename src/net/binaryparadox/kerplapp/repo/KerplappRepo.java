@@ -119,7 +119,7 @@ public class KerplappRepo
       for(Apk apk : app.apks)
       {
         File outFile = new File(repoDir, apk.apkName);
-        if(!copyFile(apk.apkPath, outFile))
+        if(!copyFile(apk.apkSourcePath, outFile))
         {
           throw new IllegalStateException("Unable to copy APK");
         }
@@ -224,13 +224,14 @@ public class KerplappRepo
     apkOb.detail_hashType = "sha256";
     apkOb.detail_hash = Utils.getBinaryHash(apkFile, apkOb.detail_hashType);
     apkOb.added = new Date(pkgInfo.lastUpdateTime);
-    apkOb.apkPath = apkFile.getAbsolutePath();
-    apkOb.apkName = apkFile.getName();
+    apkOb.apkSourcePath = apkFile.getAbsolutePath();
+    apkOb.apkSourceName = apkFile.getName();
     apkOb.minSdkVersion = a.targetSdkVersion;
     apkOb.id = appOb.id;
     apkOb.file = apkFile;
     apkOb.detail_permissions = pkgInfo.requestedPermissions;
-    
+    apkOb.apkName = apkOb.id + "_" + apkOb.vercode + ".apk";
+
     FeatureInfo[] features = pkgInfo.reqFeatures;
     
     if(features != null && features.length > 0)

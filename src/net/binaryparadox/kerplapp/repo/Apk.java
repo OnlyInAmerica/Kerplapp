@@ -30,6 +30,7 @@ public class Apk {
   // transition to this field existing.
   public String sig;
 
-  public String apkPath;
-  public String apkName;
+  public String apkSourcePath;  // the original path to the APK
+  public String apkSourceName;  // the original name of the APK
+  public String apkName;        // F-Droid style APK name
 }
