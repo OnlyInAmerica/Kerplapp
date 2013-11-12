@@ -3,6 +3,7 @@ package net.binaryparadox.kerplapp;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -12,6 +13,9 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -131,12 +135,33 @@ public class KerplappActivity extends Activity {
             @Override
             public void onClick(View v) {
                 if (uriString != null) {
+                    // TODO check if F-Droid is actually installed instead of just crashing
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriString));
                     intent.setClassName("org.fdroid.fdroid", "org.fdroid.fdroid.ManageRepo");
                     startActivity(intent);
                 }
             }
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.kerplapp_activity, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_setup_repo:
+                return true;
+            case R.id.menu_send_to_fdroid:
+                return true;
+            case R.id.menu_settings:
+                return true;
+        }
+        return false;
     }
 
     @Override
@@ -182,6 +207,7 @@ public class KerplappActivity extends Activity {
         /**
          * Updating progress bar
          */
+        @Override
         protected void onProgressUpdate(String... progress) {
             // setting progress percentage
             repoProgress.setProgress(Integer.parseInt(progress[0]));
