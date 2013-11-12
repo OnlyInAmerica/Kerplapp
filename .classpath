@@ -3,15 +3,15 @@
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
-	<classpathentry exported="true" kind="lib" path="lib/sc-light-jdk15on-1.47.0.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/scpkix-jdk15on-1.47.0.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/scprov-jdk15on-1.47.0.2.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/zipio-lib-1.9-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/zipsigner-lib-1.18-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/nanohttpd-webserver-2.0.3.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/nanohttpd-2.0.3.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/kellinwood-logging-android-1.5-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/kellinwood-logging-lib-1.2-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/sc-light-jdk15on-1.47.0.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/scpkix-jdk15on-1.47.0.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/scprov-jdk15on-1.47.0.2.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/zipio-lib-1.9-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/zipsigner-lib-1.18-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/nanohttpd-webserver-2.0.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/nanohttpd-2.0.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/kellinwood-logging-android-1.5-SNAPSHOT.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/kellinwood-logging-lib-1.2-SNAPSHOT.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="output" path="bin/classes"/>
