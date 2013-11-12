@@ -23,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
@@ -122,22 +123,51 @@ public class KerplappRepo {
         return Build.VERSION.SDK_INT;
     }
 
-    public static boolean copyFile(String inFile, File out) {
+    public static boolean copyFile(String inFileName, File outFile) {
+        /* use symlinks if they are available, otherwise fall back to copying */
+        if (new File("/system/bin/ln").exists()) {
+            return doSymLink(inFileName, outFile);
+        } else
+            return doCopyFile(inFileName, outFile);
+    }
+
+    public static boolean doSymLink(String inFileName, File outFile) {
+        int exitCode = -1;
+        try {
+            Process sh = Runtime.getRuntime().exec("sh");
+            OutputStream out = sh.getOutputStream();
+            String command = "/system/bin/ln -s " + inFileName + " " + outFile + "\nexit\n";
+            Log.i(TAG, command);
+            out.write(command.getBytes("ASCII"));
+
+            final char buf[] = new char[10];
+            InputStreamReader reader = new InputStreamReader(sh.getInputStream());
+            while (reader.read(buf) != -1)
+                Log.i(TAG, "stdout: " + buf.toString());
+            reader = new InputStreamReader(sh.getErrorStream());
+            while (reader.read(buf) != -1)
+                Log.i(TAG, "stderr: " + buf.toString());
+
+            exitCode = sh.waitFor();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return exitCode == 0;
+    }
+
+    public static boolean doCopyFile(String inFileName, File outFile) {
         byte[] buf = new byte[1024];
         int readBytes;
         InputStream inStream = null;
         OutputStream outStream = null;
 
         try {
-            inStream = new FileInputStream(inFile);
-        } catch (IOException e) {
-            Log.e(TAG, e.getMessage());
-            return false;
-        }
-
-        try {
-
-            outStream = new FileOutputStream(out);
+            inStream = new FileInputStream(inFileName);
+            outStream = new FileOutputStream(outFile);
 
             while ((readBytes = inStream.read(buf)) > 0) {
                 outStream.write(buf, 0, readBytes);
@@ -518,9 +548,5 @@ public class KerplappRepo {
             t.printStackTrace();
             Log.e(TAG, t.getMessage());
         }
-
     }
-
-    public String pubkey; // null for an unsigned repo
-
 }
