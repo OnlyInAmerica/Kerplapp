@@ -1,28 +1,6 @@
 
 package net.binaryparadox.kerplapp;
 
-import java.io.File;
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Locale;
-
-import javax.net.ssl.SSLServerSocketFactory;
-
-import net.binaryparadox.kerplapp.repo.Crypto;
-import net.binaryparadox.kerplapp.repo.KerplappRepo;
-import net.binaryparadox.kerplapp.repo.KerplappRepo.ScanListener;
-
-import fi.iki.elonen.NanoHTTPD;
-import fi.iki.elonen.ServerRunner;
-import fi.iki.elonen.SimpleWebServer;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
@@ -37,6 +15,24 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import fi.iki.elonen.SimpleWebServer;
+
+import net.binaryparadox.kerplapp.repo.Crypto;
+import net.binaryparadox.kerplapp.repo.KerplappRepo;
+import net.binaryparadox.kerplapp.repo.KerplappRepo.ScanListener;
+
+import java.io.File;
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.SignatureException;
+import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.Locale;
 
 @SuppressLint("DefaultLocale")
 public class KerplappActivity extends Activity
