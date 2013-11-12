@@ -23,8 +23,7 @@ public class Apk {
     public String detail_hashType;
     public int minSdkVersion; // 0 if unknown
     public Date added;
-    public String[] detail_permissions; // null if empty or
-                                        // unknown
+    public String[] detail_permissions; // null if empty or unknown
     public String[] features; // null if empty or unknown
 
     // ID (md5 sum of public key) of signature. Might be null, in the

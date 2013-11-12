@@ -15,14 +15,11 @@ import java.security.NoSuchAlgorithmException;
  * application UAppID's. Provided a binary file or a package name this class is
  * capable of creating a UAppID returned as a string literal.
  */
-public class Utils
-{
+public class Utils {
     private static final String TAG = Utils.class.getCanonicalName();
 
-    public static String hashBytes(byte[] input, String algo)
-    {
-        try
-        {
+    public static String hashBytes(byte[] input, String algo) {
+        try {
             MessageDigest md = MessageDigest.getInstance(algo);
             byte[] hashBytes = md.digest(input);
             String hash = toHexString(hashBytes);
@@ -41,16 +38,13 @@ public class Utils
      * @param apkPath the path to a binary file to hash.
      * @return the SHA1 hash of the file provided as an argument.
      */
-    public static String getBinaryHash(File apk)
-    {
+    public static String getBinaryHash(File apk) {
         return getBinaryHash(apk, "SHA1");
     }
 
-    public static String getBinaryHash(File apk, String algo)
-    {
+    public static String getBinaryHash(File apk, String algo) {
         FileInputStream fis = null;
-        try
-        {
+        try {
             MessageDigest md = MessageDigest.getInstance(algo);
             fis = new FileInputStream(apk);
 
@@ -84,8 +78,7 @@ public class Utils
      * @param bytes an array of bytes.
      * @return the bytes represented as a string of hexadecimal digits.
      */
-    public static String toHexString(byte[] bytes)
-    {
+    public static String toHexString(byte[] bytes) {
         BigInteger bi = new BigInteger(1, bytes);
         return String.format("%0" + (bytes.length << 1) + "X", bi);
     }

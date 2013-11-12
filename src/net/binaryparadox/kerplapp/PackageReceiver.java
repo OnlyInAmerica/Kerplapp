@@ -17,8 +17,7 @@ import android.widget.Toast;
  * @see BroadcastReceiver
  * @see Utils
  */
-public class PackageReceiver extends BroadcastReceiver
-{
+public class PackageReceiver extends BroadcastReceiver {
     private static final String TAG = PackageReceiver.class.getCanonicalName();
     private static final String INTENT_DATA_PREFIX = "package:";
     private static final int TOAST_DURATION = 10;
@@ -29,8 +28,7 @@ public class PackageReceiver extends BroadcastReceiver
      * android.content.Intent)
      */
     @Override
-    public void onReceive(Context context, Intent intent)
-    {
+    public void onReceive(Context context, Intent intent) {
         assert (intent != null);
 
         String pkgName = intent.getDataString();

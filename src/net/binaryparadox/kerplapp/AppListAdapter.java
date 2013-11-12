@@ -13,34 +13,29 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 
-public class AppListAdapter extends ArrayAdapter<AppListEntry>
-{
+public class AppListAdapter extends ArrayAdapter<AppListEntry> {
     public ArrayList<AppListEntry> appList;
     private Activity activity;
 
     public AppListAdapter(Activity activity, Context context,
-            int textViewResourceId, ArrayList<AppListEntry> appList)
-    {
+            int textViewResourceId, ArrayList<AppListEntry> appList) {
         super(context, textViewResourceId, appList);
         this.appList = new ArrayList<AppListEntry>();
         this.appList.addAll(appList);
         this.activity = activity;
     }
 
-    private class ViewHolder
-    {
+    private class ViewHolder {
         TextView appName;
         CheckBox appPkg;
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent)
-    {
+    public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder = null;
         Log.v("ConvertView", String.valueOf(position));
 
-        if (convertView == null)
-        {
+        if (convertView == null) {
             LayoutInflater vi = (LayoutInflater) activity
                     .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             convertView = vi.inflate(R.layout.app_select_info, null);
@@ -50,10 +45,9 @@ public class AppListAdapter extends ArrayAdapter<AppListEntry>
             holder.appPkg = (CheckBox) convertView.findViewById(R.id.appCheckbox);
             convertView.setTag(holder);
 
-            holder.appPkg.setOnClickListener(new View.OnClickListener()
-            {
-                public void onClick(View v)
-                {
+            holder.appPkg.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
                     CheckBox cb = (CheckBox) v;
                     AppListEntry app = (AppListEntry) cb.getTag();
                     app.setChecked(cb.isChecked());

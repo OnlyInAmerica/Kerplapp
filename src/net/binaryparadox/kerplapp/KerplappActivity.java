@@ -35,8 +35,7 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 @SuppressLint("DefaultLocale")
-public class KerplappActivity extends Activity
-{
+public class KerplappActivity extends Activity {
     private static final String TAG = PackageReceiver.class.getCanonicalName();
     private ProgressDialog repoProgress;
 
@@ -45,8 +44,7 @@ public class KerplappActivity extends Activity
 
     /** Called when the activity is first created. */
     @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
@@ -57,8 +55,7 @@ public class KerplappActivity extends Activity
 
         b.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
+            public void onClick(View v) {
                 new ScanForAppsTask().execute();
             }
         });
@@ -67,10 +64,8 @@ public class KerplappActivity extends Activity
 
         w.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
-                try
-                {
+            public void onClick(View v) {
+                try {
                     WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
                     int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
                     final String formatedIpAddress = String.format(Locale.CANADA, "%d.%d.%d.%d",
@@ -83,8 +78,7 @@ public class KerplappActivity extends Activity
                             Toast.LENGTH_SHORT);
                     toast.show();
 
-                    Runnable webServer = new Runnable()
-                    {
+                    Runnable webServer = new Runnable() {
                         @Override
                         public void run() {
                             SimpleWebServer kerplappSrv = new SimpleWebServer(formatedIpAddress,
@@ -135,8 +129,7 @@ public class KerplappActivity extends Activity
         final Button sendToFDroid = (Button) findViewById(R.id.toFdroidBtn);
         sendToFDroid.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
+            public void onClick(View v) {
                 if (uriString != null) {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriString));
                     intent.setClassName("org.fdroid.fdroid", "org.fdroid.fdroid.ManageRepo");
@@ -164,11 +157,9 @@ public class KerplappActivity extends Activity
     }
 
     public class ScanForAppsTask extends AsyncTask<String, String, ArrayList<AppListEntry>>
-            implements ScanListener
-    {
+            implements ScanListener {
         @Override
-        protected void onPreExecute()
-        {
+        protected void onPreExecute() {
             super.onPreExecute();
             showDialog(0);
         }
@@ -177,10 +168,8 @@ public class KerplappActivity extends Activity
          * Downloading file in background thread
          */
         @Override
-        protected ArrayList<AppListEntry> doInBackground(String... arg)
-        {
-            try
-            {
+        protected ArrayList<AppListEntry> doInBackground(String... arg) {
+            try {
                 KerplappApplication appCtx = (KerplappApplication) getApplication();
                 KerplappRepo repo = appCtx.getRepo();
                 return repo.loadInstalledPackageNames(this);
@@ -193,15 +182,13 @@ public class KerplappActivity extends Activity
         /**
          * Updating progress bar
          */
-        protected void onProgressUpdate(String... progress)
-        {
+        protected void onProgressUpdate(String... progress) {
             // setting progress percentage
             repoProgress.setProgress(Integer.parseInt(progress[0]));
         }
 
         @Override
-        protected void onPostExecute(ArrayList<AppListEntry> pkgs)
-        {
+        protected void onPostExecute(ArrayList<AppListEntry> pkgs) {
             dismissDialog(0);
             Intent i = new Intent(getApplicationContext(), AppSelectActivity.class);
             i.putParcelableArrayListExtra("packages", pkgs);
@@ -209,8 +196,7 @@ public class KerplappActivity extends Activity
         }
 
         @Override
-        public void processedApp(String pkgName, int index, int total)
-        {
+        public void processedApp(String pkgName, int index, int total) {
             float progress = index / (float) total;
             int progressPercent = (int) (progress * 100);
             publishProgress(String.valueOf(progressPercent));

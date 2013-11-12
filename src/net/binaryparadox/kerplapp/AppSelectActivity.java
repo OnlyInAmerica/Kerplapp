@@ -38,19 +38,16 @@ public class AppSelectActivity extends Activity {
         final Button b = (Button) findViewById(R.id.repoCreateBtn);
         b.setOnClickListener(new OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
+            public void onClick(View v) {
                 ArrayList<AppListEntry> appList = dataAdapter.appList;
                 ArrayList<AppListEntry> checked = new ArrayList<AppListEntry>();
 
-                for (AppListEntry a : appList)
-                {
+                for (AppListEntry a : appList) {
                     if (a.isChecked())
                         checked.add(a);
                 }
 
-                try
-                {
+                try {
                     for (AppListEntry e : checked)
                         repo.addAppToRepo(e.getPkgName());
 
@@ -101,8 +98,7 @@ public class AppSelectActivity extends Activity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void displayListView(List<AppListEntry> installedPackages)
-    {
+    private void displayListView(List<AppListEntry> installedPackages) {
         dataAdapter = new AppListAdapter(this, this.getApplicationContext(),
                 R.layout.app_select_info,
                 (ArrayList<AppListEntry>) installedPackages);
@@ -110,8 +106,7 @@ public class AppSelectActivity extends Activity {
         listView.setAdapter(dataAdapter);
         listView.setOnItemClickListener(new OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-            {
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 /*
                  * App app = (App) parent.getItemAtPosition(position);
                  * Toast.makeText(getApplicationContext(), "Clicked on Row: " +

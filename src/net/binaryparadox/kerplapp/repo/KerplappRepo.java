@@ -47,8 +47,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import kellinwood.security.zipsigner.ZipSigner;
 
-public class KerplappRepo
-{
+public class KerplappRepo {
     private static final String TAG = KerplappRepo.class.getCanonicalName();
 
     private PackageManager pm = null;
@@ -61,24 +60,20 @@ public class KerplappRepo
     public File webRoot = null;
     public File repoDir = null;
 
-    public KerplappRepo(Context c)
-    {
+    public KerplappRepo(Context c) {
         webRoot = c.getFilesDir();
         pm = c.getPackageManager();
     }
 
-    public File getRepoDir()
-    {
+    public File getRepoDir() {
         return repoDir;
     }
 
-    public File getIndex()
-    {
+    public File getIndex() {
         return xmlIndex;
     }
 
-    public void init() throws Exception
-    {
+    public void init() throws Exception {
         repoDir = new File(webRoot, "repo");
 
         if (!repoDir.exists())
@@ -102,22 +97,17 @@ public class KerplappRepo
          */
     }
 
-    public void copyApksToRepo()
-    {
+    public void copyApksToRepo() {
         copyApksToRepo(new ArrayList<String>(apps.keySet()));
     }
 
-    public void copyApksToRepo(List<String> appsToCopy)
-    {
-        for (String pkg : appsToCopy)
-        {
+    public void copyApksToRepo(List<String> appsToCopy) {
+        for (String pkg : appsToCopy) {
             App app = apps.get(pkg);
 
-            for (Apk apk : app.apks)
-            {
+            for (Apk apk : app.apks) {
                 File outFile = new File(repoDir, apk.apkName);
-                if (!copyFile(apk.apkSourcePath, outFile))
-                {
+                if (!copyFile(apk.apkSourcePath, outFile)) {
                     throw new IllegalStateException("Unable to copy APK");
                 }
             }
@@ -161,18 +151,15 @@ public class KerplappRepo
         }
     }
 
-    public interface ScanListener
-    {
+    public interface ScanListener {
         public void processedApp(String pkgName, int index, int total);
     }
 
-    public ArrayList<AppListEntry> loadInstalledPackageNames()
-    {
+    public ArrayList<AppListEntry> loadInstalledPackageNames() {
         return loadInstalledPackageNames(null);
     }
 
-    public ArrayList<AppListEntry> loadInstalledPackageNames(ScanListener callback)
-    {
+    public ArrayList<AppListEntry> loadInstalledPackageNames(ScanListener callback) {
         List<ApplicationInfo> apps =
                 pm.getInstalledApplications(PackageManager.GET_META_DATA);
 
@@ -181,8 +168,7 @@ public class KerplappRepo
 
         ArrayList<AppListEntry> installedPkgs = new ArrayList<AppListEntry>();
 
-        for (int i = 0; i < apps.size(); i++)
-        {
+        for (int i = 0; i < apps.size(); i++) {
             ApplicationInfo a = apps.get(i);
 
             String pkgName = a.packageName;
@@ -197,8 +183,7 @@ public class KerplappRepo
         return installedPkgs;
     }
 
-    public App addAppToRepo(String pkgName) throws NameNotFoundException
-    {
+    public App addAppToRepo(String pkgName) throws NameNotFoundException {
         ApplicationInfo a = pm.getApplicationInfo(pkgName, PackageManager.GET_META_DATA);
         PackageInfo pkgInfo = pm.getPackageInfo(pkgName, PackageManager.GET_SIGNATURES
                 | PackageManager.GET_PERMISSIONS);
@@ -231,8 +216,7 @@ public class KerplappRepo
 
         FeatureInfo[] features = pkgInfo.reqFeatures;
 
-        if (features != null && features.length > 0)
-        {
+        if (features != null && features.length > 0) {
             String[] featureNames = new String[features.length];
 
             for (int i = 0; i < features.length; i++)
@@ -244,8 +228,7 @@ public class KerplappRepo
         // Signature[] sigs = pkgInfo.signatures;
 
         byte[] rawCertBytes;
-        try
-        {
+        try {
             JarFile apkJar = new JarFile(apkFile);
             JarEntry aSignedEntry = (JarEntry) apkJar.getEntry("AndroidManifest.xml");
 
@@ -254,8 +237,7 @@ public class KerplappRepo
 
             InputStream tmpIn = apkJar.getInputStream(aSignedEntry);
             byte[] buff = new byte[2048];
-            while (tmpIn.read(buff, 0, buff.length) != -1)
-            {
+            while (tmpIn.read(buff, 0, buff.length) != -1) {
                 // NOP - apparently have to READ from the JarEntry before you
                 // can call
                 // getCerficates() and have it return != null. Yay Java.
@@ -282,8 +264,7 @@ public class KerplappRepo
              * Fdroidserver
              */
             byte[] fdroidSig = new byte[rawCertBytes.length * 2];
-            for (int j = 0; j < rawCertBytes.length; j++)
-            {
+            for (int j = 0; j < rawCertBytes.length; j++) {
                 byte v = rawCertBytes[j];
                 int d = (v >> 4) & 0xF;
                 fdroidSig[j * 2] = (byte) (d >= 10 ? ('a' + d - 10) : ('0' + d));
@@ -307,13 +288,11 @@ public class KerplappRepo
         return appOb;
     }
 
-    public List<String> getInstalledPkgNames()
-    {
+    public List<String> getInstalledPkgNames() {
         return new ArrayList<String>(this.apps.keySet());
     }
 
-    public boolean validApp(App a)
-    {
+    public boolean validApp(App a) {
         if (a == null)
             return false;
 
@@ -333,8 +312,7 @@ public class KerplappRepo
         return true;
     }
 
-    public void writeIndexXML() throws Exception
-    {
+    public void writeIndexXML() throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
 
@@ -345,8 +323,7 @@ public class KerplappRepo
         Element repo = doc.createElement("repo");
         repo.setAttribute("icon", "blah.png");
         repo.setAttribute("name", "Kerplapp Repo");
-        repo.setAttribute("url", "http://localhost:8888"); // TODO replace with
-                                                           // real IP addr
+        repo.setAttribute("url", "http://localhost:8888"); // TODO replace with real IP addr
         rootElement.appendChild(repo);
 
         Element repoDesc = doc.createElement("description");
@@ -354,8 +331,7 @@ public class KerplappRepo
         repo.appendChild(repoDesc);
 
         SimpleDateFormat dateToStr = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        for (Entry<String, App> entry : apps.entrySet())
-        {
+        for (Entry<String, App> entry : apps.entrySet()) {
             String latestVersion = "0";
             String latestVerCode = "0";
             App a = entry.getValue();
@@ -400,13 +376,11 @@ public class KerplappRepo
             app.appendChild(license);
 
             Element categories = doc.createElement("categories");
-            categories.setTextContent("Kerplapp"); // TODO also add hostname/IP
-                                                   // comma-separated
+            categories.setTextContent("Kerplapp"); // TODO also add hostname/IP comma-separated
             app.appendChild(categories);
 
             Element category = doc.createElement("category");
-            category.setTextContent("Kerplapp"); // TODO also add hostname/IP
-                                                 // comma-separated
+            category.setTextContent("Kerplapp"); // TODO also add hostname/IP comma-separated
             app.appendChild(category);
 
             Element web = doc.createElement("web");
@@ -424,8 +398,7 @@ public class KerplappRepo
             Element marketVerCode = doc.createElement("marketvercode");
             app.appendChild(marketVerCode);
 
-            for (Apk apk : a.apks)
-            {
+            for (Apk apk : a.apks) {
                 Element packageNode = doc.createElement("package");
 
                 Element version = doc.createElement("version");
@@ -465,12 +438,10 @@ public class KerplappRepo
                 packageNode.appendChild(apkAdded);
 
                 Element features = doc.createElement("features");
-                if (apk.features != null && apk.features.length > 0)
-                {
+                if (apk.features != null && apk.features.length > 0) {
                     StringBuilder buff = new StringBuilder();
 
-                    for (int i = 0; i < apk.features.length; i++)
-                    {
+                    for (int i = 0; i < apk.features.length; i++) {
                         buff.append(apk.features[i]);
 
                         if (i != apk.features.length - 1)
@@ -482,12 +453,10 @@ public class KerplappRepo
                 packageNode.appendChild(features);
 
                 Element permissions = doc.createElement("permissions");
-                if (apk.detail_permissions != null && apk.detail_permissions.length > 0)
-                {
+                if (apk.detail_permissions != null && apk.detail_permissions.length > 0) {
                     StringBuilder buff = new StringBuilder();
 
-                    for (int i = 0; i < apk.detail_permissions.length; i++)
-                    {
+                    for (int i = 0; i < apk.detail_permissions.length; i++) {
                         buff.append(apk.detail_permissions[i].replace("android.permission.", ""));
 
                         if (i != apk.detail_permissions.length - 1)
@@ -515,8 +484,7 @@ public class KerplappRepo
         transformer.transform(domSource, result);
     }
 
-    public void writeIndexJar() throws IOException
-    {
+    public void writeIndexJar() throws IOException {
         BufferedOutputStream bo = new BufferedOutputStream(
                 new FileOutputStream(xmlIndexJarUnsigned));
         JarOutputStream jo = new JarOutputStream(bo);
@@ -539,8 +507,7 @@ public class KerplappRepo
 
         // Sign with the built-in default test key/certificate.
         ZipSigner zipSigner;
-        try
-        {
+        try {
             zipSigner = new ZipSigner();
             zipSigner.setKeymode("testkey");
             zipSigner.signZip(xmlIndexJarUnsigned.getAbsolutePath(), xmlIndexJar.getAbsolutePath());
