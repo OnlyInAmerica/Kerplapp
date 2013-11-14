@@ -172,7 +172,9 @@ public class KerplappActivity extends Activity {
         repoSwitch.setTextOn(repoUriString);
         repoSwitch.setTextOff(repoUriString);
         ImageView repoQrCodeImageView = (ImageView) findViewById(R.id.repoQrCode);
-        repoQrCodeImageView.setImageBitmap(generateQrCode(repoUriString));
+        // F-Droid currently only understands fdroidrepo:// and fdroidrepos://
+        String fdroidrepoUriString = repoUriString.replace("http", "fdroidrepo");
+        repoQrCodeImageView.setImageBitmap(generateQrCode(fdroidrepoUriString));
 
         wifiNetworkName = wifiInfo.getSSID();
         TextView wifiNetworkNameTextView = (TextView) findViewById(R.id.wifiNetworkName);
