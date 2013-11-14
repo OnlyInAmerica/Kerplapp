@@ -8,8 +8,6 @@
 	<classpathentry exported="true" kind="lib" path="libs/scprov-jdk15on-1.47.0.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/zipio-lib-1.9-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/zipsigner-lib-1.18-SNAPSHOT.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/nanohttpd-webserver-2.0.3.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/nanohttpd-2.0.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/kellinwood-logging-android-1.5-SNAPSHOT.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/kellinwood-logging-lib-1.2-SNAPSHOT.jar"/>
 	<classpathentry kind="src" path="src"/>
