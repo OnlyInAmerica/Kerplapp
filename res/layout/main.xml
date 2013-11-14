@@ -4,11 +4,25 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <Button
-        android:id="@+id/startBtn"
+    <ToggleButton
+        android:id="@+id/repoSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <TextView
+        android:id="@+id/instrucionsTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_weight="0.33"
+        android:text="@string/instructions" />
+
+    <ImageView
+        android:id="@+id/repoQrCode"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="0.33"
-        android:text="Host Repo" />
+        android:contentDescription="QR Code of repo URL" />
 
 </LinearLayout>

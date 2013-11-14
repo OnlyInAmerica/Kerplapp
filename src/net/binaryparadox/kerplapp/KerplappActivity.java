@@ -3,7 +3,6 @@ package net.binaryparadox.kerplapp;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -13,13 +12,17 @@ import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
@@ -54,6 +57,9 @@ public class KerplappActivity extends Activity {
     private String repoUriString = null;
     private File app_keystore;
 
+    private Thread webServerThread = null;
+    private Handler handler = null;
+
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,54 +69,15 @@ public class KerplappActivity extends Activity {
         app_keystore = getDir("keystore", Context.MODE_PRIVATE);
 
         setIpAddressFromWifi();
-        final Context ctx = getApplicationContext();
 
-
-        final Button w = (Button) findViewById(R.id.startBtn);
-
-        w.setOnClickListener(new View.OnClickListener() {
+        final ToggleButton repoSwitch = (ToggleButton) findViewById(R.id.repoSwitch);
+        repoSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Runnable webServer = new Runnable() {
-                    @Override
-                    public void run() {
-                        SimpleWebServer kerplappSrv = new SimpleWebServer(ipAddressString,
-                                8888, ctx.getFilesDir(), false);
-                        try {
-                            String jksPath = new File(app_keystore, "keystore.jks")
-                                    .getAbsolutePath();
-                            String password = Crypto.KEYSTORE_PASS;
-
-                            KeyStore store = Crypto.createKeyStore(new File(jksPath));
-
-                            // SSLServerSocketFactory factory =
-                            // NanoHTTPD.makeSSLSocketFactory(jksPath,
-                            // password.toCharArray());
-                            // kerplappSrv.makeSecure(factory);
-                            kerplappSrv.start();
-
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        } catch (InvalidKeyException e) {
-                            e.printStackTrace();
-                        } catch (KeyStoreException e) {
-                            e.printStackTrace();
-                        } catch (NoSuchAlgorithmException e) {
-                            e.printStackTrace();
-                        } catch (CertificateException e) {
-                            e.printStackTrace();
-                        } catch (IllegalStateException e) {
-                            e.printStackTrace();
-                        } catch (NoSuchProviderException e) {
-                            e.printStackTrace();
-                        } catch (SignatureException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                };
-
-                Thread webServerThread = new Thread(webServer);
-                webServerThread.start();
+                if (repoSwitch.isChecked())
+                    startWebServer();
+                else
+                    stopWebServer();
             }
         });
     }
@@ -170,6 +137,13 @@ public class KerplappActivity extends Activity {
                 (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
         repoUriString = "http://" + ipAddressString + ":8888/repo";
+
+        ToggleButton repoSwitch = (ToggleButton) findViewById(R.id.repoSwitch);
+        repoSwitch.setText(repoUriString);
+        repoSwitch.setTextOn(repoUriString);
+        repoSwitch.setTextOff(repoUriString);
+        ImageView repoQrCodeImageView = (ImageView) findViewById(R.id.repoQrCode);
+        repoQrCodeImageView.setImageBitmap(generateQrCode(repoUriString));
     }
 
     private Bitmap generateQrCode(String qrData) {
@@ -184,6 +158,63 @@ public class KerplappActivity extends Activity {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private void startWebServer() {
+        Runnable webServer = new Runnable() {
+            @Override
+            public void run() {
+                final SimpleWebServer kerplappSrv = new SimpleWebServer(ipAddressString,
+                        8888, getFilesDir(), false);
+                Looper.prepare(); // must be run before creating a Handler
+                handler = new Handler() {
+                    @Override
+                    public void handleMessage(Message msg) {
+                        // the only message this Thread responds to is STOP!
+                        Log.i(TAG, "we've been asked to stop the webserver: " + msg.obj);
+                        kerplappSrv.stop();
+                    }
+                };
+                try {
+                    String jksPath = new File(app_keystore, "keystore.jks")
+                            .getAbsolutePath();
+                    String password = Crypto.KEYSTORE_PASS;
+                    KeyStore store = Crypto.createKeyStore(new File(jksPath));
+
+                    // SSLServerSocketFactory factory =
+                    // NanoHTTPD.makeSSLSocketFactory(jksPath,
+                    // password.toCharArray());
+                    // kerplappSrv.makeSecure(factory);
+                    kerplappSrv.start();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InvalidKeyException e) {
+                    e.printStackTrace();
+                } catch (KeyStoreException e) {
+                    e.printStackTrace();
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                } catch (CertificateException e) {
+                    e.printStackTrace();
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
+                } catch (NoSuchProviderException e) {
+                    e.printStackTrace();
+                } catch (SignatureException e) {
+                    e.printStackTrace();
+                }
+                Looper.loop(); // start the message receiving loop
+            }
+        };
+        webServerThread = new Thread(webServer);
+        webServerThread.start();
+    }
+
+    private void stopWebServer() {
+        Log.i(TAG, "stop the webserver");
+        Message msg = handler.obtainMessage();
+        msg.obj = handler.getLooper().getThread().getName() + " says stop";
+        handler.sendMessage(msg);
     }
 
     public class ScanForAppsTask extends AsyncTask<String, String, ArrayList<AppListEntry>>
