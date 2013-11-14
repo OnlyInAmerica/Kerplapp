@@ -8,6 +8,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
@@ -19,6 +20,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.encode.Contents;
+import com.google.zxing.encode.QRCodeEncoder;
 
 import fi.iki.elonen.SimpleWebServer;
 
@@ -165,6 +171,21 @@ public class KerplappActivity extends Activity {
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
         repoUriString = "http://" + ipAddressString + ":8888/repo";
     }
+
+    private Bitmap generateQrCode(String qrData) {
+        int qrCodeDimension = 500;
+
+        QRCodeEncoder qrCodeEncoder = new QRCodeEncoder(qrData, null,
+                Contents.Type.TEXT, BarcodeFormat.QR_CODE.toString(), qrCodeDimension);
+
+        try {
+            return qrCodeEncoder.encodeAsBitmap();
+        } catch (WriterException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public class ScanForAppsTask extends AsyncTask<String, String, ArrayList<AppListEntry>>
             implements ScanListener {
         @Override
