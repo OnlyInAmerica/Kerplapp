@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -52,6 +54,9 @@ public class KerplappActivity extends Activity {
     private static final String TAG = PackageReceiver.class.getCanonicalName();
     private ProgressDialog repoProgress;
 
+    private ToggleButton repoSwitch;
+    private WifiManager wifiManager;
+    private String wifiNetworkName = "";
     private int ipAddress = 0;
     private String ipAddressString = null;
     private String repoUriString = null;
@@ -68,18 +73,23 @@ public class KerplappActivity extends Activity {
 
         app_keystore = getDir("keystore", Context.MODE_PRIVATE);
 
-        setIpAddressFromWifi();
-
-        final ToggleButton repoSwitch = (ToggleButton) findViewById(R.id.repoSwitch);
-        repoSwitch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (repoSwitch.isChecked())
-                    startWebServer();
-                else
-                    stopWebServer();
-            }
-        });
+        repoSwitch = (ToggleButton) findViewById(R.id.repoSwitch);
+        wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+        int wifiState = wifiManager.getWifiState();
+        if (wifiState == WifiManager.WIFI_STATE_ENABLED) {
+            setIpAddressFromWifi();
+            wireRepoSwitchToWebServer();
+        } else {
+            repoSwitch.setText(R.string.enable_wifi);
+            repoSwitch.setTextOn(getString(R.string.enabling_wifi));
+            repoSwitch.setTextOff(getString(R.string.enable_wifi));
+            repoSwitch.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    enableWifi();
+                }
+            });
+        }
     }
 
     @Override
@@ -130,20 +140,41 @@ public class KerplappActivity extends Activity {
         }
     }
 
+    private void enableWifi() {
+        wifiManager.setWifiEnabled(true);
+        new WaitForWifiAsyncTask().execute();
+    }
+
+    private void wireRepoSwitchToWebServer() {
+        repoSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (repoSwitch.isChecked())
+                    startWebServer();
+                else
+                    stopWebServer();
+            }
+        });
+    }
+
     private void setIpAddressFromWifi() {
-        WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
-        ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+
+        ipAddress = wifiInfo.getIpAddress();
         ipAddressString = String.format(Locale.CANADA, "%d.%d.%d.%d",
                 (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
         repoUriString = "http://" + ipAddressString + ":8888/repo";
 
-        ToggleButton repoSwitch = (ToggleButton) findViewById(R.id.repoSwitch);
         repoSwitch.setText(repoUriString);
         repoSwitch.setTextOn(repoUriString);
         repoSwitch.setTextOff(repoUriString);
         ImageView repoQrCodeImageView = (ImageView) findViewById(R.id.repoQrCode);
         repoQrCodeImageView.setImageBitmap(generateQrCode(repoUriString));
+
+        wifiNetworkName = wifiInfo.getSSID();
+        TextView wifiNetworkNameTextView = (TextView) findViewById(R.id.wifiNetworkName);
+        wifiNetworkNameTextView.setText(wifiNetworkName);
     }
 
     private Bitmap generateQrCode(String qrData) {
@@ -158,6 +189,42 @@ public class KerplappActivity extends Activity {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public class WaitForWifiAsyncTask extends AsyncTask<Void, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                while (!wifiManager.isWifiEnabled()) {
+                    Log.i(TAG, "waiting for the wifi to be enabled...");
+                    Thread.sleep(3000);
+                    Log.i(TAG, "ever recover from sleep?");
+                }
+                Log.i(TAG, "0");
+                ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+                Log.i(TAG, "1");
+                while (ipAddress == 0) {
+                    Log.i(TAG, "waiting for an IP address...");
+                    Thread.sleep(3000);
+                    ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+                }
+                Log.i(TAG, "2");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            Log.i(TAG, "onPostExecute " + ipAddress);
+            repoSwitch.setChecked(false);
+            if (wifiManager.isWifiEnabled() && ipAddress != 0) {
+                setIpAddressFromWifi();
+                wireRepoSwitchToWebServer();
+            }
+        }
     }
 
     private void startWebServer() {
