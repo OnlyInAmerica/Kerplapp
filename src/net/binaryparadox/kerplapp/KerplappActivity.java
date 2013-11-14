@@ -52,17 +52,10 @@ public class KerplappActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        final Button b = (Button) findViewById(R.id.plopBtn);
         app_keystore = getDir("keystore", Context.MODE_PRIVATE);
 
         final Context ctx = getApplicationContext();
 
-        b.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                new ScanForAppsTask().execute();
-            }
-        });
 
         final Button w = (Button) findViewById(R.id.startBtn);
 
@@ -130,18 +123,6 @@ public class KerplappActivity extends Activity {
                 }
             }
         });
-        final Button sendToFDroid = (Button) findViewById(R.id.toFdroidBtn);
-        sendToFDroid.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (uriString != null) {
-                    // TODO check if F-Droid is actually installed instead of just crashing
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uriString));
-                    intent.setClassName("org.fdroid.fdroid", "org.fdroid.fdroid.ManageRepo");
-                    startActivity(intent);
-                }
-            }
-        });
     }
 
     @Override
@@ -155,8 +136,19 @@ public class KerplappActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_setup_repo:
+                new ScanForAppsTask().execute();
                 return true;
             case R.id.menu_send_to_fdroid:
+                if (repoUriString == null) {
+                    Toast.makeText(this, "The repo is not configured yet!", Toast.LENGTH_LONG)
+                            .show();
+                } else {
+                    // TODO check if F-Droid is actually installed instead of
+                    // just crashing
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(repoUriString));
+                    intent.setClassName("org.fdroid.fdroid", "org.fdroid.fdroid.ManageRepo");
+                    startActivity(intent);
+                }
                 return true;
             case R.id.menu_settings:
                 return true;
