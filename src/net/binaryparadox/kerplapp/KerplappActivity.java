@@ -8,6 +8,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -17,6 +18,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -177,9 +179,26 @@ public class KerplappActivity extends Activity {
         wifiNetworkNameTextView.setText(wifiNetworkName);
     }
 
+    @SuppressWarnings("deprecation")
+    @SuppressLint("NewApi")
     private Bitmap generateQrCode(String qrData) {
-        int qrCodeDimension = 500;
-
+        Display display = getWindowManager().getDefaultDisplay();
+        Point outSize = new Point();
+        int x, y, qrCodeDimension;
+        /* lame, got to use both the new and old APIs here */
+        if (android.os.Build.VERSION.SDK_INT >= 13) {
+            display.getSize(outSize);
+            x = outSize.x;
+            y = outSize.y;
+        } else {
+            x = display.getWidth();
+            y = display.getHeight();
+        }
+        if (outSize.x < outSize.y)
+            qrCodeDimension = x;
+        else
+            qrCodeDimension = y;
+        Log.i(TAG, "generating QRCode Bitmap of " + qrCodeDimension + "x" + qrCodeDimension);
         QRCodeEncoder qrCodeEncoder = new QRCodeEncoder(qrData, null,
                 Contents.Type.TEXT, BarcodeFormat.QR_CODE.toString(), qrCodeDimension);
 

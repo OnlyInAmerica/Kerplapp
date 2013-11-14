@@ -35,14 +35,12 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
-        android:layout_weight="0.33"
         android:text="@string/instructions" />
 
     <ImageView
         android:id="@+id/repoQrCode"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0.33"
         android:contentDescription="QR Code of repo URL" />
 
 </LinearLayout>
