@@ -43,7 +43,9 @@ public class KerplappActivity extends Activity {
     private static final String TAG = PackageReceiver.class.getCanonicalName();
     private ProgressDialog repoProgress;
 
-    private String uriString = null;
+    private int ipAddress = 0;
+    private String ipAddressString = null;
+    private String repoUriString = null;
     private File app_keystore;
 
     /** Called when the activity is first created. */
@@ -54,6 +56,7 @@ public class KerplappActivity extends Activity {
 
         app_keystore = getDir("keystore", Context.MODE_PRIVATE);
 
+        setIpAddressFromWifi();
         final Context ctx = getApplicationContext();
 
 
@@ -62,65 +65,46 @@ public class KerplappActivity extends Activity {
         w.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
-                    int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
-                    final String formatedIpAddress = String.format(Locale.CANADA, "%d.%d.%d.%d",
-                            (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
-                            (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
+                Runnable webServer = new Runnable() {
+                    @Override
+                    public void run() {
+                        SimpleWebServer kerplappSrv = new SimpleWebServer(ipAddressString,
+                                8888, ctx.getFilesDir(), false);
+                        try {
+                            String jksPath = new File(app_keystore, "keystore.jks")
+                                    .getAbsolutePath();
+                            String password = Crypto.KEYSTORE_PASS;
 
-                    uriString = "http://" + formatedIpAddress + ":8888/repo";
-                    Toast toast = Toast.makeText(v.getContext().getApplicationContext(),
-                            "Please access! " + uriString,
-                            Toast.LENGTH_SHORT);
-                    toast.show();
+                            KeyStore store = Crypto.createKeyStore(new File(jksPath));
 
-                    Runnable webServer = new Runnable() {
-                        @Override
-                        public void run() {
-                            SimpleWebServer kerplappSrv = new SimpleWebServer(formatedIpAddress,
-                                    8888,
-                                    ctx.getFilesDir(), false);
+                            // SSLServerSocketFactory factory =
+                            // NanoHTTPD.makeSSLSocketFactory(jksPath,
+                            // password.toCharArray());
+                            // kerplappSrv.makeSecure(factory);
+                            kerplappSrv.start();
 
-                            try {
-                                String jksPath = new File(app_keystore, "keystore.jks")
-                                        .getAbsolutePath();
-                                String password = Crypto.KEYSTORE_PASS;
-
-                                KeyStore store = Crypto.createKeyStore(new File(jksPath));
-
-                                // SSLServerSocketFactory factory =
-                                // NanoHTTPD.makeSSLSocketFactory(jksPath,
-                                // password.toCharArray());
-                                // kerplappSrv.makeSecure(factory);
-                                kerplappSrv.start();
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            } catch (InvalidKeyException e) {
-                                e.printStackTrace();
-                            } catch (KeyStoreException e) {
-                                e.printStackTrace();
-                            } catch (NoSuchAlgorithmException e) {
-                                e.printStackTrace();
-                            } catch (CertificateException e) {
-                                e.printStackTrace();
-                            } catch (IllegalStateException e) {
-                                e.printStackTrace();
-                            } catch (NoSuchProviderException e) {
-                                e.printStackTrace();
-                            } catch (SignatureException e) {
-                                e.printStackTrace();
-                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } catch (InvalidKeyException e) {
+                            e.printStackTrace();
+                        } catch (KeyStoreException e) {
+                            e.printStackTrace();
+                        } catch (NoSuchAlgorithmException e) {
+                            e.printStackTrace();
+                        } catch (CertificateException e) {
+                            e.printStackTrace();
+                        } catch (IllegalStateException e) {
+                            e.printStackTrace();
+                        } catch (NoSuchProviderException e) {
+                            e.printStackTrace();
+                        } catch (SignatureException e) {
+                            e.printStackTrace();
                         }
+                    }
+                };
 
-                    };
-
-                    Thread webServerThread = new Thread(webServer);
-                    webServerThread.start();
-                } catch (Exception e) {
-                    Log.e(TAG, e.getMessage());
-                }
+                Thread webServerThread = new Thread(webServer);
+                webServerThread.start();
             }
         });
     }
@@ -173,6 +157,14 @@ public class KerplappActivity extends Activity {
         }
     }
 
+    private void setIpAddressFromWifi() {
+        WifiManager wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+        ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+        ipAddressString = String.format(Locale.CANADA, "%d.%d.%d.%d",
+                (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
+                (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
+        repoUriString = "http://" + ipAddressString + ":8888/repo";
+    }
     public class ScanForAppsTask extends AsyncTask<String, String, ArrayList<AppListEntry>>
             implements ScanListener {
         @Override
