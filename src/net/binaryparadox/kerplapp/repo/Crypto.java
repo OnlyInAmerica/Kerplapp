@@ -48,7 +48,7 @@ public class Crypto {
         Date now = new Date();
 
         X509V3CertificateGenerator cert = new X509V3CertificateGenerator();
-        cert.setSerialNumber(BigInteger.valueOf(1)); // or generate a random number
+        cert.setSerialNumber(BigInteger.valueOf(now.getTime())); // or generate a random number
         cert.setSubjectDN(new X509Principal("CN=localhost")); // see examples to add O,OU etc
         cert.setIssuerDN(new X509Principal("CN=localhost")); // same since it is self-signed
         cert.setPublicKey(keyPair.getPublic());
