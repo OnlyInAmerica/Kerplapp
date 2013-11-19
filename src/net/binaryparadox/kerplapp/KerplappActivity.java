@@ -173,14 +173,14 @@ public class KerplappActivity extends Activity {
         ipAddressString = String.format(Locale.CANADA, "%d.%d.%d.%d",
                 (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
-        repoUriString = "http://" + ipAddressString + ":8888/repo";
+        repoUriString = "https://" + ipAddressString + ":8888/repo";
 
         repoSwitch.setText(repoUriString);
         repoSwitch.setTextOn(repoUriString);
         repoSwitch.setTextOff(repoUriString);
         ImageView repoQrCodeImageView = (ImageView) findViewById(R.id.repoQrCode);
         // F-Droid currently only understands fdroidrepo:// and fdroidrepos://
-        String fdroidrepoUriString = repoUriString.replace("http", "fdroidrepo");
+        String fdroidrepoUriString = repoUriString.replace("https", "fdroidrepos");
         repoQrCodeImageView.setImageBitmap(generateQrCode(fdroidrepoUriString));
 
         wifiNetworkName = wifiInfo.getSSID();
