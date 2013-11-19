@@ -7,6 +7,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.net.Uri;
@@ -33,43 +34,28 @@ import com.google.zxing.WriterException;
 import com.google.zxing.encode.Contents;
 import com.google.zxing.encode.QRCodeEncoder;
 
-import fi.iki.elonen.NanoHTTPD;
-import fi.iki.elonen.SimpleWebServer;
-
-import net.binaryparadox.kerplapp.repo.Crypto;
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
 import net.binaryparadox.kerplapp.repo.KerplappRepo.ScanListener;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.SignatureException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Locale;
-
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLServerSocketFactory;
 
 @SuppressLint("DefaultLocale")
 public class KerplappActivity extends Activity {
     private static final String TAG = KerplappActivity.class.getCanonicalName();
     private ProgressDialog repoProgress;
-
+    
     private ToggleButton repoSwitch;
     private WifiManager wifiManager;
     private String wifiNetworkName = "";
     private int ipAddress = 0;
+    private int port 	  = 8888;
     private String ipAddressString = null;
     private String repoUriString = null;
-    private File app_keystore;
+    private File appKeyStoreDir;
+    private File keyStoreFile;
 
     private Thread webServerThread = null;
     private Handler handler = null;
@@ -79,8 +65,9 @@ public class KerplappActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-
-        app_keystore = getDir("keystore", Context.MODE_PRIVATE);
+               
+        appKeyStoreDir = getDir("keystore", Context.MODE_PRIVATE);
+        keyStoreFile = new File(appKeyStoreDir, "kerplapp.bks");
 
         repoSwitch = (ToggleButton) findViewById(R.id.repoSwitch);
         wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
@@ -173,7 +160,9 @@ public class KerplappActivity extends Activity {
         ipAddressString = String.format(Locale.CANADA, "%d.%d.%d.%d",
                 (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
-        repoUriString = "https://" + ipAddressString + ":8888/repo";
+        
+        repoUriString = String.format(Locale.CANADA, "https://%s:%d/repo",
+        		ipAddressString, port);
 
         repoSwitch.setText(repoUriString);
         repoSwitch.setTextOn(repoUriString);
@@ -259,8 +248,8 @@ public class KerplappActivity extends Activity {
         Runnable webServer = new Runnable() {
             @Override
             public void run() {
-                final SimpleWebServer kerplappSrv = new SimpleWebServer(ipAddressString,
-                        8888, getFilesDir(), false);
+                final KerplappHTTPD kerplappSrv = new KerplappHTTPD(ipAddressString,
+                	port, getFilesDir(), false, keyStoreFile);
                 Looper.prepare(); // must be run before creating a Handler
                 handler = new Handler() {
                     @Override
@@ -271,38 +260,9 @@ public class KerplappActivity extends Activity {
                     }
                 };
                 try {
-                    File keyStoreFile = new File(app_keystore, "keystore.bks");
-                    KeyStore store = Crypto.createKeyStore(keyStoreFile);
-
-                    String password = Crypto.KEYSTORE_PASS;
-                    InputStream keyStoreFileIS = new FileInputStream(keyStoreFile);
-                    store.load(keyStoreFileIS, password.toCharArray());
-                    
-                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                    keyManagerFactory.init(store, password.toCharArray());
-                    
-                    SSLServerSocketFactory factory =
-                      NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory);
-                    kerplappSrv.makeSecure(factory);
-                    kerplappSrv.start();
+                	kerplappSrv.start();
                 } catch (IOException e) {
                     e.printStackTrace();
-                } catch (InvalidKeyException e) {
-                    e.printStackTrace();
-                } catch (KeyStoreException e) {
-                    e.printStackTrace();
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                } catch (CertificateException e) {
-                    e.printStackTrace();
-                } catch (IllegalStateException e) {
-                    e.printStackTrace();
-                } catch (NoSuchProviderException e) {
-                    e.printStackTrace();
-                } catch (SignatureException e) {
-                    e.printStackTrace();
-                } catch (UnrecoverableKeyException e) {
-                	e.printStackTrace();
                 }
                 Looper.loop(); // start the message receiving loop
             }
