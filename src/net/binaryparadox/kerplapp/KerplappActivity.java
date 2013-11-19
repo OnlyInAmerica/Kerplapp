@@ -33,6 +33,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.encode.Contents;
 import com.google.zxing.encode.QRCodeEncoder;
 
+import fi.iki.elonen.NanoHTTPD;
 import fi.iki.elonen.SimpleWebServer;
 
 import net.binaryparadox.kerplapp.repo.Crypto;
@@ -40,16 +41,22 @@ import net.binaryparadox.kerplapp.repo.KerplappRepo;
 import net.binaryparadox.kerplapp.repo.KerplappRepo.ScanListener;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Locale;
+
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLServerSocketFactory;
 
 @SuppressLint("DefaultLocale")
 public class KerplappActivity extends Activity {
@@ -264,15 +271,19 @@ public class KerplappActivity extends Activity {
                     }
                 };
                 try {
-                    String jksPath = new File(app_keystore, "keystore.jks")
-                            .getAbsolutePath();
-                    String password = Crypto.KEYSTORE_PASS;
-                    KeyStore store = Crypto.createKeyStore(new File(jksPath));
+                    File keyStoreFile = new File(app_keystore, "keystore.bks");
+                    KeyStore store = Crypto.createKeyStore(keyStoreFile);
 
-                    // SSLServerSocketFactory factory =
-                    // NanoHTTPD.makeSSLSocketFactory(jksPath,
-                    // password.toCharArray());
-                    // kerplappSrv.makeSecure(factory);
+                    String password = Crypto.KEYSTORE_PASS;
+                    InputStream keyStoreFileIS = new FileInputStream(keyStoreFile);
+                    store.load(keyStoreFileIS, password.toCharArray());
+                    
+                    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                    keyManagerFactory.init(store, password.toCharArray());
+                    
+                    SSLServerSocketFactory factory =
+                      NanoHTTPD.makeSSLSocketFactory(store, keyManagerFactory);
+                    kerplappSrv.makeSecure(factory);
                     kerplappSrv.start();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -290,6 +301,8 @@ public class KerplappActivity extends Activity {
                     e.printStackTrace();
                 } catch (SignatureException e) {
                     e.printStackTrace();
+                } catch (UnrecoverableKeyException e) {
+                	e.printStackTrace();
                 }
                 Looper.loop(); // start the message receiving loop
             }
