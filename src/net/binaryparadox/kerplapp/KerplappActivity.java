@@ -60,7 +60,7 @@ import javax.net.ssl.SSLServerSocketFactory;
 
 @SuppressLint("DefaultLocale")
 public class KerplappActivity extends Activity {
-    private static final String TAG = PackageReceiver.class.getCanonicalName();
+    private static final String TAG = KerplappActivity.class.getCanonicalName();
     private ProgressDialog repoProgress;
 
     private ToggleButton repoSwitch;
