@@ -113,6 +113,7 @@ public class KerplappActivity extends Activity {
                 }
                 return true;
             case R.id.menu_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
                 return true;
         }
         return false;
