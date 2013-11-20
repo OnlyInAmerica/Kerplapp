@@ -5,9 +5,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.net.Uri;
@@ -37,8 +35,14 @@ import com.google.zxing.encode.QRCodeEncoder;
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
 import net.binaryparadox.kerplapp.repo.KerplappRepo.ScanListener;
 
-import java.io.File;
+import org.spongycastle.operator.OperatorCreationException;
+
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -46,7 +50,7 @@ import java.util.Locale;
 public class KerplappActivity extends Activity {
     private static final String TAG = KerplappActivity.class.getCanonicalName();
     private ProgressDialog repoProgress;
-    
+
     private ToggleButton repoSwitch;
     private WifiManager wifiManager;
     private String wifiNetworkName = "";
@@ -54,8 +58,6 @@ public class KerplappActivity extends Activity {
     private int port 	  = 8888;
     private String ipAddressString = null;
     private String repoUriString = null;
-    private File appKeyStoreDir;
-    private File keyStoreFile;
 
     private Thread webServerThread = null;
     private Handler handler = null;
@@ -65,9 +67,6 @@ public class KerplappActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-               
-        appKeyStoreDir = getDir("keystore", Context.MODE_PRIVATE);
-        keyStoreFile = new File(appKeyStoreDir, "kerplapp.bks");
 
         repoSwitch = (ToggleButton) findViewById(R.id.repoSwitch);
         wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
@@ -160,7 +159,7 @@ public class KerplappActivity extends Activity {
         ipAddressString = String.format(Locale.CANADA, "%d.%d.%d.%d",
                 (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
-        
+
         repoUriString = String.format(Locale.CANADA, "https://%s:%d/repo",
         		ipAddressString, port);
 
@@ -175,6 +174,29 @@ public class KerplappActivity extends Activity {
         wifiNetworkName = wifiInfo.getSSID();
         TextView wifiNetworkNameTextView = (TextView) findViewById(R.id.wifiNetworkName);
         wifiNetworkNameTextView.setText(wifiNetworkName);
+
+        KerplappApplication appCtx = (KerplappApplication) getApplication();
+        KerplappKeyStore    keyStore = appCtx.getKeyStore();
+
+        //Once the IP address is known we need to generate a self signed certificate
+        //to use for HTTPS that has a CN field set to the ipAddressString.
+        try {
+            keyStore.setupHTTPSCertificate(ipAddressString);
+        } catch (UnrecoverableKeyException e1) {
+            e1.printStackTrace();
+        } catch (CertificateException e1) {
+            e1.printStackTrace();
+        } catch (OperatorCreationException e1) {
+            e1.printStackTrace();
+        } catch (KeyStoreException e1) {
+            e1.printStackTrace();
+        } catch (NoSuchAlgorithmException e1) {
+            e1.printStackTrace();
+        } catch (FileNotFoundException e1) {
+            e1.printStackTrace();
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -248,8 +270,12 @@ public class KerplappActivity extends Activity {
         Runnable webServer = new Runnable() {
             @Override
             public void run() {
+                KerplappApplication appCtx = (KerplappApplication) getApplication();
+                KerplappKeyStore    keyStore = appCtx.getKeyStore();
+
                 final KerplappHTTPD kerplappSrv = new KerplappHTTPD(ipAddressString,
-                	port, getFilesDir(), false, keyStoreFile);
+                	port, getFilesDir(), false, keyStore);
+
                 Looper.prepare(); // must be run before creating a Handler
                 handler = new Handler() {
                     @Override
