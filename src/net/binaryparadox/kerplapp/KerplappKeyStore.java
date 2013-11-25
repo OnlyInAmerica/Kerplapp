@@ -68,7 +68,7 @@ public class KerplappKeyStore {
             //Generate a self signed certificate for signing the index.jar
             //We can't generate the HTTPS certificate until we know what the IP
             //address will be to use for the CN field.
-            X500Name subject = new X500Name("Kerplapp Repo Certificate");
+            X500Name subject = new X500Name("O=Kerplapp,OU=GuardianProject");
             Certificate indexCert = generateSelfSignedCertChain(rndKeys, subject);
 
             addToStore(INDEX_CERT_ALIAS, rndKeys, indexCert);

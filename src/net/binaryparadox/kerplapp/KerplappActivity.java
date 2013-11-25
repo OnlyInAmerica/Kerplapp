@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.net.Uri;
@@ -16,6 +17,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
@@ -55,7 +57,7 @@ public class KerplappActivity extends Activity {
     private WifiManager wifiManager;
     private String wifiNetworkName = "";
     private int ipAddress = 0;
-    private int port 	  = 8888;
+    private int port = 8888;
     private String ipAddressString = null;
     private String repoUriString = null;
 
@@ -154,6 +156,9 @@ public class KerplappActivity extends Activity {
     }
 
     private void setIpAddressFromWifi() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        final boolean useHttps = prefs.getBoolean("use_https", false);
+
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
 
         ipAddress = wifiInfo.getIpAddress();
@@ -161,8 +166,9 @@ public class KerplappActivity extends Activity {
                 (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
 
-        repoUriString = String.format(Locale.CANADA, "https://%s:%d/repo",
-        		ipAddressString, port);
+        repoUriString = String.format(Locale.CANADA, "%s://%s:%d/repo",
+                useHttps ? "https" : "http",
+                ipAddressString, port);
 
         repoSwitch.setText(repoUriString);
         repoSwitch.setTextOn(repoUriString);
@@ -170,6 +176,7 @@ public class KerplappActivity extends Activity {
         ImageView repoQrCodeImageView = (ImageView) findViewById(R.id.repoQrCode);
         // F-Droid currently only understands fdroidrepo:// and fdroidrepos://
         String fdroidrepoUriString = repoUriString.replace("https", "fdroidrepos");
+        fdroidrepoUriString = fdroidrepoUriString.replace("http", "fdroidrepo");
         repoQrCodeImageView.setImageBitmap(generateQrCode(fdroidrepoUriString));
 
         wifiNetworkName = wifiInfo.getSSID();
@@ -177,10 +184,15 @@ public class KerplappActivity extends Activity {
         wifiNetworkNameTextView.setText(wifiNetworkName);
 
         KerplappApplication appCtx = (KerplappApplication) getApplication();
-        KerplappKeyStore    keyStore = appCtx.getKeyStore();
+        KerplappKeyStore keyStore = appCtx.getKeyStore();
 
-        //Once the IP address is known we need to generate a self signed certificate
-        //to use for HTTPS that has a CN field set to the ipAddressString.
+        // Once the IP address is known we need to generate a self signed
+        // certificate
+        // to use for HTTPS that has a CN field set to the ipAddressString.
+        // We'll generate
+        // it even if useHttps is false to simplify having to detect when that
+        // preference
+        // changes.
         try {
             keyStore.setupHTTPSCertificate(ipAddressString);
         } catch (UnrecoverableKeyException e1) {
@@ -268,14 +280,21 @@ public class KerplappActivity extends Activity {
     }
 
     private void startWebServer() {
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        final boolean useHttps = prefs.getBoolean("use_https", false);
+
         Runnable webServer = new Runnable() {
             @Override
             public void run() {
-                KerplappApplication appCtx = (KerplappApplication) getApplication();
-                KerplappKeyStore    keyStore = appCtx.getKeyStore();
-
                 final KerplappHTTPD kerplappSrv = new KerplappHTTPD(ipAddressString,
-                	port, getFilesDir(), false, keyStore);
+                        port, getFilesDir(), false);
+
+                if (useHttps)
+                {
+                    KerplappApplication appCtx = (KerplappApplication) getApplication();
+                    KerplappKeyStore keyStore = appCtx.getKeyStore();
+                    kerplappSrv.enableHTTPS(keyStore);
+                }
 
                 Looper.prepare(); // must be run before creating a Handler
                 handler = new Handler() {
@@ -287,7 +306,7 @@ public class KerplappActivity extends Activity {
                     }
                 };
                 try {
-                	kerplappSrv.start();
+                    kerplappSrv.start();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
