@@ -324,13 +324,10 @@ public class KerplappRepo {
         return true;
     }
 
-    public void update() {
-        try {
-            writeIndexXML();
-            writeIndexJar();
-            copyApksToRepo();
-        } catch (Exception e) {
-            Log.e(TAG, e.toString());
+    public void copyIconsToRepo() {
+        for (App app : apps.values()) {
+            // TODO get the icon out of the APK and copy it to the repo dir
+            // appInfo.loadIcon(pm).toString(); // copy drawable to file?
         }
     }
 
