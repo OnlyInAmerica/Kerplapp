@@ -1,66 +1,38 @@
 
 package net.binaryparadox.kerplapp;
 
-import android.annotation.TargetApi;
-import android.os.Build;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
+import android.support.v4.app.ListFragment;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
 import android.widget.Toast;
 
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
 public class AppSelectActivity extends FragmentActivity {
     private final String TAG = AppSelectActivity.class.getName();
-    private AppListAdapter dataAdapter = null;
+    private ListFragment appListFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_app_select);
-        // Show the Up button in the action bar.
-        setupActionBar();
-
-        final KerplappApplication appCtx = (KerplappApplication) getApplication();
-        final KerplappRepo repo = appCtx.getRepo();
-
-        final Button b = (Button) findViewById(R.id.repoCreateBtn);
-        b.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    for (int i = 0; i < dataAdapter.getCount(); i++)
-                        repo.addAppToRepo(((AppEntry) dataAdapter.getItem(i)).getPackageName());
-
-                    repo.writeIndexXML();
-                    repo.writeIndexJar();
-                    repo.copyApksToRepo();
-
-                    Toast toast = Toast.makeText(v.getContext().getApplicationContext(),
-                            "Repo Created",
-                            Toast.LENGTH_SHORT);
-                    toast.show();
-                } catch (Exception e) {
-                    Log.e(TAG, e.getMessage());
-                }
-            }
-        });
-
     }
 
-    /**
-     * Set up the {@link android.app.ActionBar}, if the API is available.
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    private void setupActionBar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            getActionBar().setDisplayHomeAsUpEnabled(true);
-        }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (appListFragment == null)
+            appListFragment = (ListFragment) getSupportFragmentManager().findFragmentById(
+                    R.id.fragment_app_list);
+    }
+
+    private void updateLocalRepo() {
+        KerplappRepo repo = ((KerplappApplication) getApplication()).getRepo();
+        repo.update();
+        Toast.makeText(this, R.string.updated_local_repo, Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -74,6 +46,11 @@ public class AppSelectActivity extends FragmentActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
+                updateLocalRepo();
+                finish();
+                return true;
+            case R.id.action_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
                 return true;
         }
         return super.onOptionsItemSelected(item);

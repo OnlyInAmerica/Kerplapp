@@ -25,14 +25,18 @@ import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager.LoaderCallbacks;
 import android.support.v4.content.Loader;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
 import java.util.List;
 
 public class AppListFragment extends ListFragment implements LoaderCallbacks<List<AppEntry>> {
 
     private AppListAdapter adapter;
+    private KerplappRepo repo;
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -42,8 +46,9 @@ public class AppListFragment extends ListFragment implements LoaderCallbacks<Lis
 
         adapter = new AppListAdapter(getActivity());
         setListAdapter(adapter);
-
         setListShown(false);
+
+        repo = ((KerplappApplication) getActivity().getApplication()).getRepo();
 
         // Prepare the loader
         // either reconnect with an existing one or start a new one
@@ -53,6 +58,13 @@ public class AppListFragment extends ListFragment implements LoaderCallbacks<Lis
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         Toast.makeText(getActivity(), "Clicked: " + id, Toast.LENGTH_SHORT).show();
+        AppEntry appEntry = (AppEntry) adapter.getItem(position);
+        appEntry.setEnabled(!appEntry.isEnabled());
+        ((CheckBox) v.findViewById(R.id.appCheckbox)).setChecked(appEntry.isEnabled());
+        if (appEntry.isEnabled())
+            repo.addApp(appEntry.getPackageName());
+        else
+            repo.removeApp(appEntry.getPackageName());
     }
 
     @Override

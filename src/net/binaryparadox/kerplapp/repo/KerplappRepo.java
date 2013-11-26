@@ -102,8 +102,8 @@ public class KerplappRepo {
     }
 
     public void copyApksToRepo(List<String> appsToCopy) {
-        for (String pkg : appsToCopy) {
-            App app = apps.get(pkg);
+        for (String packageName : appsToCopy) {
+            App app = apps.get(packageName);
 
             for (Apk apk : app.apks) {
                 File outFile = new File(repoDir, apk.apkName);
@@ -181,15 +181,22 @@ public class KerplappRepo {
     }
 
     public interface ScanListener {
-        public void processedApp(String pkgName, int index, int total);
+        public void processedApp(String packageName, int index, int total);
     }
 
-    public App addAppToRepo(String pkgName) throws NameNotFoundException {
-        ApplicationInfo a = pm.getApplicationInfo(pkgName, PackageManager.GET_META_DATA);
-        PackageInfo pkgInfo = pm.getPackageInfo(pkgName, PackageManager.GET_SIGNATURES
-                | PackageManager.GET_PERMISSIONS);
-        App appOb = new App();
+    public App addApp(String packageName) {
+        ApplicationInfo a;
+        PackageInfo pkgInfo;
+        try {
+            a = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
+            pkgInfo = pm.getPackageInfo(packageName, PackageManager.GET_SIGNATURES
+                    | PackageManager.GET_PERMISSIONS);
+        } catch (NameNotFoundException e1) {
+            e1.printStackTrace();
+            return null;
+        }
 
+        App appOb = new App();
         appOb.name = (String) a.loadLabel(pm);
         appOb.summary = (String) a.loadDescription(pm);
         appOb.icon = a.loadIcon(pm).toString();
@@ -285,12 +292,16 @@ public class KerplappRepo {
         if (!validApp(appOb))
             return null;
 
-        apps.put(pkgName, appOb);
+        apps.put(packageName, appOb);
         return appOb;
     }
 
-    public List<String> getInstalledPkgNames() {
-        return new ArrayList<String>(this.apps.keySet());
+    public void removeApp(String packageName) {
+        apps.remove(packageName);
+    }
+
+    public List<String> getApps() {
+        return new ArrayList<String>(apps.keySet());
     }
 
     public boolean validApp(App a) {
@@ -311,6 +322,16 @@ public class KerplappRepo {
             return false;
 
         return true;
+    }
+
+    public void update() {
+        try {
+            writeIndexXML();
+            writeIndexJar();
+            copyApksToRepo();
+        } catch (Exception e) {
+            Log.e(TAG, e.toString());
+        }
     }
 
     public void writeIndexXML() throws Exception {

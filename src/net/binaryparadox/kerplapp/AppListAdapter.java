@@ -55,11 +55,10 @@ public class AppListAdapter extends BaseAdapter {
             view = convertView;
         }
 
-        AppEntry item = data.get(position);
-        // TODO wire up the checkbox!
-        ((CheckBox) view.findViewById(R.id.appCheckbox)).setChecked(false);
-        ((ImageView) view.findViewById(R.id.icon)).setImageDrawable(item.getIcon());
-        ((TextView) view.findViewById(R.id.text)).setText(item.getLabel());
+        AppEntry appEntry = data.get(position);
+        ((CheckBox) view.findViewById(R.id.appCheckbox)).setChecked(appEntry.isEnabled());
+        ((ImageView) view.findViewById(R.id.icon)).setImageDrawable(appEntry.getIcon());
+        ((TextView) view.findViewById(R.id.text)).setText(appEntry.getLabel());
 
         return view;
     }

@@ -2,8 +2,9 @@
 <resources>
 
     <string name="app_name">Kerplapp</string>
-    <string name="title_activity_app_select">Build Local Repo</string>
-    <string name="action_settings">Settings</string>
+    <string name="title_activity_app_select">Local Repo</string>
+    <string name="updated_local_repo">Updated local repo</string>
+    <string name="settings">Settings</string>
     <string name="repo_instructions">To connect to other people\'s devices, make sure both devices are on the same WiFi network.  Then either type the URL above into F-Droid, or scan this QR Code:</string>
     <string name="bootstrap_instructions">To install Bazaar on another device that doesn\'t already have it, make sure both devices are on the same WiFi network, then either type the URL above into a browser, or scan this QR Code:</string>
     <string name="enable_wifi">Enable WiFi</string>
