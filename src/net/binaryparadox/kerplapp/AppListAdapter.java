@@ -49,7 +49,7 @@ public class AppListAdapter extends BaseAdapter {
         View view;
 
         if (convertView == null) {
-            view = inflater.inflate(R.layout.app_select_info, parent, false);
+            view = inflater.inflate(R.layout.app_entry, parent, false);
         } else {
             view = convertView;
         }
