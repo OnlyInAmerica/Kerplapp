@@ -25,7 +25,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -56,10 +55,12 @@ public class AppListAdapter extends BaseAdapter {
         }
 
         AppEntry appEntry = data.get(position);
-        ((CheckBox) view.findViewById(R.id.appCheckbox)).setChecked(appEntry.isEnabled());
         ((ImageView) view.findViewById(R.id.icon)).setImageDrawable(appEntry.getIcon());
         ((TextView) view.findViewById(R.id.text)).setText(appEntry.getLabel());
-
+        if (appEntry.isEnabled())
+            view.setBackgroundColor(view.getResources().getColor(R.color.app_selected));
+        else
+            view.setBackgroundColor(view.getResources().getColor(android.R.color.background_dark));
         return view;
     }
 
