@@ -185,44 +185,44 @@ public class KerplappRepo {
     }
 
     public App addApp(String packageName) {
-        ApplicationInfo a;
-        PackageInfo pkgInfo;
+        ApplicationInfo appInfo;
+        PackageInfo packageInfo;
         try {
-            a = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
-            pkgInfo = pm.getPackageInfo(packageName, PackageManager.GET_SIGNATURES
+            appInfo = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
+            packageInfo = pm.getPackageInfo(packageName, PackageManager.GET_SIGNATURES
                     | PackageManager.GET_PERMISSIONS);
         } catch (NameNotFoundException e1) {
             e1.printStackTrace();
             return null;
         }
 
-        App appOb = new App();
-        appOb.name = (String) a.loadLabel(pm);
-        appOb.summary = (String) a.loadDescription(pm);
-        appOb.icon = a.loadIcon(pm).toString();
-        appOb.id = a.packageName;
-        appOb.added = new Date(pkgInfo.firstInstallTime);
-        appOb.lastUpdated = new Date(pkgInfo.lastUpdateTime);
-        appOb.apks = new ArrayList<Apk>();
+        App app = new App();
+        app.name = (String) appInfo.loadLabel(pm);
+        app.summary = (String) appInfo.loadDescription(pm);
+        app.icon = appInfo.loadIcon(pm).toString();
+        app.id = appInfo.packageName;
+        app.added = new Date(packageInfo.firstInstallTime);
+        app.lastUpdated = new Date(packageInfo.lastUpdateTime);
+        app.apks = new ArrayList<Apk>();
 
         // TODO: use pm.getInstallerPackageName(packageName) for something
 
-        File apkFile = new File(a.publicSourceDir);
-        Apk apkOb = new Apk();
-        apkOb.version = pkgInfo.versionName;
-        apkOb.vercode = pkgInfo.versionCode;
-        apkOb.detail_hashType = "sha256";
-        apkOb.detail_hash = Utils.getBinaryHash(apkFile, apkOb.detail_hashType);
-        apkOb.added = new Date(pkgInfo.lastUpdateTime);
-        apkOb.apkSourcePath = apkFile.getAbsolutePath();
-        apkOb.apkSourceName = apkFile.getName();
-        apkOb.minSdkVersion = a.targetSdkVersion;
-        apkOb.id = appOb.id;
-        apkOb.file = apkFile;
-        apkOb.detail_permissions = pkgInfo.requestedPermissions;
-        apkOb.apkName = apkOb.id + "_" + apkOb.vercode + ".apk";
+        File apkFile = new File(appInfo.publicSourceDir);
+        Apk apk = new Apk();
+        apk.version = packageInfo.versionName;
+        apk.vercode = packageInfo.versionCode;
+        apk.detail_hashType = "sha256";
+        apk.detail_hash = Utils.getBinaryHash(apkFile, apk.detail_hashType);
+        apk.added = new Date(packageInfo.lastUpdateTime);
+        apk.apkSourcePath = apkFile.getAbsolutePath();
+        apk.apkSourceName = apkFile.getName();
+        apk.minSdkVersion = appInfo.targetSdkVersion;
+        apk.id = app.id;
+        apk.file = apkFile;
+        apk.detail_permissions = packageInfo.requestedPermissions;
+        apk.apkName = apk.id + "_" + apk.vercode + ".apk";
 
-        FeatureInfo[] features = pkgInfo.reqFeatures;
+        FeatureInfo[] features = packageInfo.reqFeatures;
 
         if (features != null && features.length > 0) {
             String[] featureNames = new String[features.length];
@@ -230,7 +230,7 @@ public class KerplappRepo {
             for (int i = 0; i < features.length; i++)
                 featureNames[i] = features[i].name;
 
-            apkOb.features = featureNames;
+            apk.features = featureNames;
         }
 
         // Signature[] sigs = pkgInfo.signatures;
@@ -279,7 +279,7 @@ public class KerplappRepo {
                 d = v & 0xF;
                 fdroidSig[j * 2 + 1] = (byte) (d >= 10 ? ('a' + d - 10) : ('0' + d));
             }
-            apkOb.sig = Utils.hashBytes(fdroidSig, "md5");
+            apk.sig = Utils.hashBytes(fdroidSig, "md5");
 
         } catch (CertificateEncodingException e) {
             return null;
@@ -287,13 +287,13 @@ public class KerplappRepo {
             return null;
         }
 
-        appOb.apks.add(apkOb);
+        app.apks.add(apk);
 
-        if (!validApp(appOb))
+        if (!validApp(app))
             return null;
 
-        apps.put(packageName, appOb);
-        return appOb;
+        apps.put(packageName, app);
+        return app;
     }
 
     public void removeApp(String packageName) {
@@ -304,20 +304,20 @@ public class KerplappRepo {
         return new ArrayList<String>(apps.keySet());
     }
 
-    public boolean validApp(App a) {
-        if (a == null)
+    public boolean validApp(App app) {
+        if (app == null)
             return false;
 
-        if (a.name == null || a.name.equals(""))
+        if (app.name == null || app.name.equals(""))
             return false;
 
-        if (a.id == null | a.id.equals(""))
+        if (app.id == null | app.id.equals(""))
             return false;
 
-        if (a.apks == null || a.apks.size() != 1)
+        if (app.apks == null || app.apks.size() != 1)
             return false;
 
-        File apkFile = a.apks.get(0).file;
+        File apkFile = app.apks.get(0).file;
         if (apkFile == null || !apkFile.canRead())
             return false;
 
@@ -356,71 +356,71 @@ public class KerplappRepo {
         for (Entry<String, App> entry : apps.entrySet()) {
             String latestVersion = "0";
             String latestVerCode = "0";
-            App a = entry.getValue();
-            Element app = doc.createElement("application");
-            app.setAttribute("id", a.id);
-            rootElement.appendChild(app);
+            App app = entry.getValue();
+            Element application = doc.createElement("application");
+            application.setAttribute("id", app.id);
+            rootElement.appendChild(application);
 
             Element appID = doc.createElement("id");
-            appID.setTextContent(a.id);
-            app.appendChild(appID);
+            appID.setTextContent(app.id);
+            application.appendChild(appID);
 
             Element added = doc.createElement("added");
-            added.setTextContent(dateToStr.format(a.added));
-            app.appendChild(added);
+            added.setTextContent(dateToStr.format(app.added));
+            application.appendChild(added);
 
             Element lastUpdated = doc.createElement("lastupdated");
-            lastUpdated.setTextContent(dateToStr.format(a.lastUpdated));
-            app.appendChild(lastUpdated);
+            lastUpdated.setTextContent(dateToStr.format(app.lastUpdated));
+            application.appendChild(lastUpdated);
 
             Element name = doc.createElement("name");
-            name.setTextContent(a.name);
-            app.appendChild(name);
+            name.setTextContent(app.name);
+            application.appendChild(name);
 
             Element summary = doc.createElement("summary");
-            summary.setTextContent(a.name);
-            app.appendChild(summary);
+            summary.setTextContent(app.name);
+            application.appendChild(summary);
 
             Element description = doc.createElement("description");
-            description.setTextContent(a.name);
-            app.appendChild(description);
+            description.setTextContent(app.name);
+            application.appendChild(description);
 
             Element desc = doc.createElement("desc");
-            desc.setTextContent(a.name);
-            app.appendChild(desc);
+            desc.setTextContent(app.name);
+            application.appendChild(desc);
 
             Element icon = doc.createElement("icon");
-            icon.setTextContent(a.icon);
-            app.appendChild(icon);
+            icon.setTextContent(app.icon);
+            application.appendChild(icon);
 
             Element license = doc.createElement("license");
             license.setTextContent("Unknown");
-            app.appendChild(license);
+            application.appendChild(license);
 
             Element categories = doc.createElement("categories");
             categories.setTextContent("Kerplapp"); // TODO also add hostname/IP comma-separated
-            app.appendChild(categories);
+            application.appendChild(categories);
 
             Element category = doc.createElement("category");
             category.setTextContent("Kerplapp"); // TODO also add hostname/IP comma-separated
-            app.appendChild(category);
+            application.appendChild(category);
 
             Element web = doc.createElement("web");
-            app.appendChild(web);
+            application.appendChild(web);
 
             Element source = doc.createElement("source");
-            app.appendChild(source);
+            application.appendChild(source);
 
             Element tracker = doc.createElement("tracker");
-            app.appendChild(tracker);
+            application.appendChild(tracker);
 
             Element marketVersion = doc.createElement("marketversion");
-            app.appendChild(marketVersion);
+            application.appendChild(marketVersion);
 
             Element marketVerCode = doc.createElement("marketvercode");
-            app.appendChild(marketVerCode);
+            application.appendChild(marketVerCode);
 
-            for (Apk apk : a.apks) {
+            for (Apk apk : app.apks) {
                 Element packageNode = doc.createElement("package");
 
                 Element version = doc.createElement("version");
@@ -489,7 +489,7 @@ public class KerplappRepo {
                 }
                 packageNode.appendChild(permissions);
 
-                app.appendChild(packageNode);
+                application.appendChild(packageNode);
             }
 
             // now mark the latest version in the feed for this particular app
