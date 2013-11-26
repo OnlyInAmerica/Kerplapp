@@ -34,9 +34,6 @@ import com.google.zxing.WriterException;
 import com.google.zxing.encode.Contents;
 import com.google.zxing.encode.QRCodeEncoder;
 
-import net.binaryparadox.kerplapp.repo.KerplappRepo;
-import net.binaryparadox.kerplapp.repo.KerplappRepo.ScanListener;
-
 import org.spongycastle.operator.OperatorCreationException;
 
 import java.io.FileNotFoundException;
@@ -45,7 +42,6 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.ArrayList;
 import java.util.Locale;
 
 @SuppressLint("DefaultLocale")
@@ -100,7 +96,7 @@ public class KerplappActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_setup_repo:
-                new ScanForAppsTask().execute();
+                startActivity(new Intent(this, AppSelectActivity.class));
                 return true;
             case R.id.menu_send_to_fdroid:
                 if (repoUriString == null) {
@@ -322,55 +318,6 @@ public class KerplappActivity extends Activity {
         Message msg = handler.obtainMessage();
         msg.obj = handler.getLooper().getThread().getName() + " says stop";
         handler.sendMessage(msg);
-    }
-
-    public class ScanForAppsTask extends AsyncTask<String, String, ArrayList<AppListEntry>>
-            implements ScanListener {
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            showDialog(0);
-        }
-
-        /**
-         * Downloading file in background thread
-         */
-        @Override
-        protected ArrayList<AppListEntry> doInBackground(String... arg) {
-            try {
-                KerplappApplication appCtx = (KerplappApplication) getApplication();
-                KerplappRepo repo = appCtx.getRepo();
-                return repo.loadInstalledPackageNames(this);
-            } catch (Exception e) {
-                Log.e("Error: ", e.getMessage());
-            }
-            return null;
-        }
-
-        /**
-         * Updating progress bar
-         */
-        @Override
-        protected void onProgressUpdate(String... progress) {
-            // setting progress percentage
-            repoProgress.setProgress(Integer.parseInt(progress[0]));
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<AppListEntry> pkgs) {
-            dismissDialog(0);
-            Intent i = new Intent(getApplicationContext(), AppSelectActivity.class);
-            i.putParcelableArrayListExtra("packages", pkgs);
-            startActivity(i);
-        }
-
-        @Override
-        public void processedApp(String pkgName, int index, int total) {
-            float progress = index / (float) total;
-            int progressPercent = (int) (progress * 100);
-            publishProgress(String.valueOf(progressPercent));
-        }
-
     }
 
 }

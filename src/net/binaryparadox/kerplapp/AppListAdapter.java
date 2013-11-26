@@ -1,74 +1,81 @@
+/*
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+Based on Paul Blundell's Tutorial:
+http://blog.blundell-apps.com/tut-asynctask-loader-using-support-library/
+
+which is originally based on:
+https://developer.android.com/reference/android/content/AsyncTaskLoader.html
+ */
 
 package net.binaryparadox.kerplapp;
 
-import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.CheckBox;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import java.util.List;
 
-public class AppListAdapter extends ArrayAdapter<AppListEntry> {
-    public ArrayList<AppListEntry> appList;
-    private Activity activity;
+public class AppListAdapter extends BaseAdapter {
 
-    public AppListAdapter(Activity activity, Context context,
-            int textViewResourceId, ArrayList<AppListEntry> appList) {
-        super(context, textViewResourceId, appList);
-        this.appList = new ArrayList<AppListEntry>();
-        this.appList.addAll(appList);
-        this.activity = activity;
+    private final LayoutInflater inflater;
+    private List<AppEntry> data;
+
+    public AppListAdapter(Context context) {
+        inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
-    private class ViewHolder {
-        TextView appName;
-        CheckBox appPkg;
+    public void setData(List<AppEntry> data) {
+        this.data = data;
+        notifyDataSetChanged();
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ViewHolder holder = null;
-        Log.v("ConvertView", String.valueOf(position));
+        View view;
 
         if (convertView == null) {
-            LayoutInflater vi = (LayoutInflater) activity
-                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            convertView = vi.inflate(R.layout.app_select_info, null);
-
-            holder = new ViewHolder();
-            holder.appName = (TextView) convertView.findViewById(R.id.appName);
-            holder.appPkg = (CheckBox) convertView.findViewById(R.id.appCheckbox);
-            convertView.setTag(holder);
-
-            holder.appPkg.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    CheckBox cb = (CheckBox) v;
-                    AppListEntry app = (AppListEntry) cb.getTag();
-                    app.setChecked(cb.isChecked());
-
-                    /*
-                     * Toast.makeText(ctx, "Clicked on Checkbox: " +
-                     * cb.getText() + " is " + cb.isChecked(),
-                     * Toast.LENGTH_LONG).show();
-                     */
-                }
-            });
+            view = inflater.inflate(R.layout.app_select_info, parent, false);
         } else {
-            holder = (ViewHolder) convertView.getTag();
+            view = convertView;
         }
 
-        AppListEntry app = appList.get(position);
-        holder.appName.setText(app.getAppName());
-        holder.appPkg.setText(app.getPkgName());
-        holder.appPkg.setTag(app);
-        holder.appPkg.setChecked(app.isChecked());
+        AppEntry item = data.get(position);
+        // TODO wire up the checkbox!
+        ((CheckBox) view.findViewById(R.id.appCheckbox)).setChecked(false);
+        ((ImageView) view.findViewById(R.id.icon)).setImageDrawable(item.getIcon());
+        ((TextView) view.findViewById(R.id.text)).setText(item.getLabel());
 
-        return convertView;
+        return view;
+    }
+
+    @Override
+    public int getCount() {
+        return data == null ? 0 : data.size();
+    }
+
+    @Override
+    public Object getItem(int position) {
+        return data == null ? null : data.get(position);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return position;
     }
 }

@@ -2,26 +2,20 @@
 package net.binaryparadox.kerplapp;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class AppSelectActivity extends Activity {
+public class AppSelectActivity extends FragmentActivity {
     private final String TAG = AppSelectActivity.class.getName();
     private AppListAdapter dataAdapter = null;
 
@@ -39,17 +33,9 @@ public class AppSelectActivity extends Activity {
         b.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                ArrayList<AppListEntry> appList = dataAdapter.appList;
-                ArrayList<AppListEntry> checked = new ArrayList<AppListEntry>();
-
-                for (AppListEntry a : appList) {
-                    if (a.isChecked())
-                        checked.add(a);
-                }
-
                 try {
-                    for (AppListEntry e : checked)
-                        repo.addAppToRepo(e.getPkgName());
+                    for (int i = 0; i < dataAdapter.getCount(); i++)
+                        repo.addAppToRepo(((AppEntry) dataAdapter.getItem(i)).getPackageName());
 
                     repo.writeIndexXML();
                     repo.writeIndexJar();
@@ -65,11 +51,6 @@ public class AppSelectActivity extends Activity {
             }
         });
 
-        Bundle extras = getIntent().getExtras();
-
-        List<AppListEntry> installedPackages = extras.getParcelableArrayList("packages");
-
-        displayListView(installedPackages);
     }
 
     /**
@@ -97,23 +78,4 @@ public class AppSelectActivity extends Activity {
         }
         return super.onOptionsItemSelected(item);
     }
-
-    private void displayListView(List<AppListEntry> installedPackages) {
-        dataAdapter = new AppListAdapter(this, this.getApplicationContext(),
-                R.layout.app_select_info,
-                (ArrayList<AppListEntry>) installedPackages);
-        ListView listView = (ListView) findViewById(R.id.appListView);
-        listView.setAdapter(dataAdapter);
-        listView.setOnItemClickListener(new OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                /*
-                 * App app = (App) parent.getItemAtPosition(position);
-                 * Toast.makeText(getApplicationContext(), "Clicked on Row: " +
-                 * app.id, Toast.LENGTH_LONG).show();
-                 */
-            }
-        });
-    }
-
 }

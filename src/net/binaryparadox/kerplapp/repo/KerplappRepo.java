@@ -10,7 +10,6 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.util.Log;
 
-import net.binaryparadox.kerplapp.AppListEntry;
 import net.binaryparadox.kerplapp.Utils;
 
 import org.w3c.dom.Document;
@@ -183,34 +182,6 @@ public class KerplappRepo {
 
     public interface ScanListener {
         public void processedApp(String pkgName, int index, int total);
-    }
-
-    public ArrayList<AppListEntry> loadInstalledPackageNames() {
-        return loadInstalledPackageNames(null);
-    }
-
-    public ArrayList<AppListEntry> loadInstalledPackageNames(ScanListener callback) {
-        List<ApplicationInfo> apps =
-                pm.getInstalledApplications(PackageManager.GET_META_DATA);
-
-        if (apps == null || apps.size() == 0)
-            return null;
-
-        ArrayList<AppListEntry> installedPkgs = new ArrayList<AppListEntry>();
-
-        for (int i = 0; i < apps.size(); i++) {
-            ApplicationInfo a = apps.get(i);
-
-            String pkgName = a.packageName;
-            String appName = (String) a.loadLabel(pm);
-
-            installedPkgs.add(new AppListEntry(pkgName, appName, false));
-
-            if (callback != null)
-                callback.processedApp(pkgName, i, apps.size());
-        }
-
-        return installedPkgs;
     }
 
     public App addAppToRepo(String pkgName) throws NameNotFoundException {
