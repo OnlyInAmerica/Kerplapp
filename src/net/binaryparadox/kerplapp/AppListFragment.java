@@ -27,14 +27,14 @@ import android.support.v4.content.Loader;
 import android.view.View;
 import android.widget.ListView;
 
-import net.binaryparadox.kerplapp.repo.KerplappRepo;
-
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class AppListFragment extends ListFragment implements LoaderCallbacks<List<AppEntry>> {
 
     private AppListAdapter adapter;
-    private KerplappRepo repo;
+    private Set<String> selectedApps = new HashSet<String>();
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -46,11 +46,13 @@ public class AppListFragment extends ListFragment implements LoaderCallbacks<Lis
         setListAdapter(adapter);
         setListShown(false);
 
-        repo = ((KerplappApplication) getActivity().getApplication()).getRepo();
-
         // Prepare the loader
         // either reconnect with an existing one or start a new one
         getLoaderManager().initLoader(0, null, this);
+    }
+
+    public String[] getSelectedApps() {
+        return selectedApps.toArray(new String[0]);
     }
 
     @Override
@@ -58,10 +60,10 @@ public class AppListFragment extends ListFragment implements LoaderCallbacks<Lis
         AppEntry appEntry = (AppEntry) adapter.getItem(position);
         appEntry.setEnabled(!appEntry.isEnabled());
         if (appEntry.isEnabled()) {
-            repo.addApp(appEntry.getPackageName());
+            selectedApps.add(appEntry.getPackageName());
             v.setBackgroundColor(getResources().getColor(R.color.app_selected));
         } else {
-            repo.removeApp(appEntry.getPackageName());
+            selectedApps.remove(appEntry.getPackageName());
             v.setBackgroundColor(getResources().getColor(android.R.color.background_dark));
         }
     }

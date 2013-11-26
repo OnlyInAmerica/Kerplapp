@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -17,7 +16,7 @@ import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
 public class AppSelectActivity extends FragmentActivity {
     private final String TAG = AppSelectActivity.class.getName();
-    private ListFragment appListFragment = null;
+    private AppListFragment appListFragment = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +28,7 @@ public class AppSelectActivity extends FragmentActivity {
     protected void onResume() {
         super.onResume();
         if (appListFragment == null)
-            appListFragment = (ListFragment) getSupportFragmentManager().findFragmentById(
+            appListFragment = (AppListFragment) getSupportFragmentManager().findFragmentById(
                     R.id.fragment_app_list);
     }
 
@@ -44,7 +43,7 @@ public class AppSelectActivity extends FragmentActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                new UpdateAsyncTask(this).execute();
+                new UpdateAsyncTask(this, appListFragment.getSelectedApps()).execute();
                 return true;
             case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
@@ -53,10 +52,12 @@ public class AppSelectActivity extends FragmentActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    class UpdateAsyncTask extends AsyncTask<Void, Integer, Void> {
+    class UpdateAsyncTask extends AsyncTask<Void, String, Void> {
         private ProgressDialog progressDialog;
+        private String[] selectedApps;
 
-        public UpdateAsyncTask(Context c) {
+        public UpdateAsyncTask(Context c, String[] apps) {
+            selectedApps = apps;
             progressDialog = new ProgressDialog(c);
             progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
             progressDialog.setTitle(R.string.updating);
@@ -71,15 +72,19 @@ public class AppSelectActivity extends FragmentActivity {
         protected Void doInBackground(Void... params) {
             KerplappRepo repo = ((KerplappApplication) getApplication()).getRepo();
             try {
-                publishProgress(R.string.deleting_repo);
+                publishProgress(getString(R.string.deleting_repo));
                 repo.deleteRepo();
-                publishProgress(R.string.writing_index_xml);
+                for (String app : selectedApps) {
+                    publishProgress(String.format(getString(R.string.adding_apks_format), app));
+                    repo.addApp(app);
+                }
+                publishProgress(getString(R.string.writing_index_xml));
                 repo.writeIndexXML();
-                publishProgress(R.string.writing_index_jar);
+                publishProgress(getString(R.string.writing_index_jar));
                 repo.writeIndexJar();
-                publishProgress(R.string.linking_apks);
+                publishProgress(getString(R.string.linking_apks));
                 repo.copyApksToRepo();
-                publishProgress(R.string.copying_icons);
+                publishProgress(getString(R.string.copying_icons));
                 repo.copyIconsToRepo();
             } catch (Exception e) {
                 Log.e(TAG, e.toString());
@@ -88,9 +93,9 @@ public class AppSelectActivity extends FragmentActivity {
         }
 
         @Override
-        protected void onProgressUpdate(Integer... progress) {
+        protected void onProgressUpdate(String... progress) {
             super.onProgressUpdate(progress);
-            progressDialog.setMessage(getString(progress[0]));
+            progressDialog.setMessage(progress[0]);
         }
 
         @Override
