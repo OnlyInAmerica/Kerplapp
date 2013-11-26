@@ -21,6 +21,8 @@ https://developer.android.com/reference/android/content/AsyncTaskLoader.html
 package net.binaryparadox.kerplapp;
 
 import android.content.Context;
+import android.content.res.Resources;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,22 +48,20 @@ public class AppListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        View view;
-
-        if (convertView == null) {
-            view = inflater.inflate(R.layout.app_entry, parent, false);
-        } else {
-            view = convertView;
-        }
+        if (convertView == null)
+            convertView = inflater.inflate(R.layout.app_entry, parent, false);
 
         AppEntry appEntry = data.get(position);
-        ((ImageView) view.findViewById(R.id.icon)).setImageDrawable(appEntry.getIcon());
-        ((TextView) view.findViewById(R.id.text)).setText(appEntry.getLabel());
+        ImageView iconView = ViewHolder.get(convertView, R.id.icon);
+        iconView.setImageDrawable(appEntry.getIcon());
+        TextView labelView = ViewHolder.get(convertView, R.id.text);
+        labelView.setText(appEntry.getLabel());
+        Resources r = convertView.getResources();
         if (appEntry.isEnabled())
-            view.setBackgroundColor(view.getResources().getColor(R.color.app_selected));
+            convertView.setBackgroundColor(r.getColor(R.color.app_selected));
         else
-            view.setBackgroundColor(view.getResources().getColor(android.R.color.background_dark));
-        return view;
+            convertView.setBackgroundColor(r.getColor(android.R.color.background_dark));
+        return convertView;
     }
 
     @Override
@@ -78,4 +78,24 @@ public class AppListAdapter extends BaseAdapter {
     public long getItemId(int position) {
         return position;
     }
+
+    /* from http://www.piwai.info/android-adapter-good-practices/#Update */
+    public static class ViewHolder {
+        // a generic return type to reduce the casting noise in client code
+        @SuppressWarnings("unchecked")
+        public static <T extends View> T get(View view, int id) {
+            SparseArray<View> viewHolder = (SparseArray<View>) view.getTag();
+            if (viewHolder == null) {
+                viewHolder = new SparseArray<View>();
+                view.setTag(viewHolder);
+            }
+            View childView = viewHolder.get(id);
+            if (childView == null) {
+                childView = view.findViewById(id);
+                viewHolder.put(id, childView);
+            }
+            return (T) childView;
+        }
+    }
+
 }
