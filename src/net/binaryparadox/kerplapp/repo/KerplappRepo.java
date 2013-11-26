@@ -97,6 +97,24 @@ public class KerplappRepo {
          */
     }
 
+    private void deleteContents(File path) {
+        if (path.exists()) {
+            File[] files = path.listFiles();
+            for (int i = 0; i < files.length; i++) {
+                if (files[i].isDirectory()) {
+                    deleteContents(files[i]);
+                }
+                else {
+                    files[i].delete();
+                }
+            }
+        }
+    }
+
+    public void deleteRepo() {
+        deleteContents(repoDir);
+    }
+
     public void copyApksToRepo() {
         copyApksToRepo(new ArrayList<String>(apps.keySet()));
     }

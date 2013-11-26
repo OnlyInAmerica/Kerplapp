@@ -5,6 +5,7 @@
     <string name="title_activity_app_select">Local Repo</string>
     <string name="updated_local_repo">Updated local repo</string>
     <string name="updating">Updating&#8230;</string>
+    <string name="deleting_repo">Deleting current repo&#8230;</string>
     <string name="writing_index_xml">Writing raw index file (index.xml)&#8230;</string>
     <string name="writing_index_jar">Writing signed index file (index.jar)&#8230;</string>
     <string name="linking_apks">Linking APKs into the repo&#8230;</string>
