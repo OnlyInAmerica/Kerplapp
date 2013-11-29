@@ -62,7 +62,9 @@ public class KerplappKeyStore {
             //Init a new keystore with a blank passphrase
             keyStore.load(null, "".toCharArray());
 
-            //Generate a random key pair
+            //Generate a random key pair to associate with the INDEX_CERT_ALIAS 
+            //certificate in the keystore. This keypair will be used for the HTTPS cert
+            //as well.
             KeyPair rndKeys = generateRandomKeypair();
 
             //Generate a self signed certificate for signing the index.jar
@@ -83,16 +85,16 @@ public class KerplappKeyStore {
 
     public void setupHTTPSCertificate(String hostname) throws CertificateException, OperatorCreationException, KeyStoreException, NoSuchAlgorithmException, FileNotFoundException, IOException, UnrecoverableKeyException
     {
-        //Generate a random key pair
-        KeyPair rndKeys = generateRandomKeypair();
-
+        //Get the existing private/public keypair to use for the HTTPS cert
+        KeyPair kerplappKeypair = getKerplappKeypair();
+        
         //Once we have a hostname we can generate a self signed cert with a valid
         //CN field to stash into the keystore in a predictable place. If the hostname
         //changes we should run this method again to stomp old HTTPS_CERT_ALIAS entries.
         X500Name subject = new X500Name("CN="+hostname);
-        Certificate indexCert = generateSelfSignedCertChain(rndKeys, subject);
+        Certificate indexCert = generateSelfSignedCertChain(kerplappKeypair, subject);
 
-        addToStore(HTTP_CERT_ALIAS, rndKeys, indexCert);
+        addToStore(HTTP_CERT_ALIAS, kerplappKeypair, indexCert);
     }
 
     public KeyStore getKeyStore()
@@ -103,6 +105,23 @@ public class KerplappKeyStore {
     public KeyManagerFactory getKeyManagerFactory()
     {
         return keyManagerFactory;
+    }
+    
+    private KeyPair getKerplappKeypair() throws KeyStoreException, UnrecoverableKeyException, NoSuchAlgorithmException
+    {
+        //You can't store a keypair without an associated certificate chain so,
+        //we'll use the INDEX_CERT_ALIAS as the de-facto keypair/certificate chain
+        //This cert/key is initialized when the KerplappKeyStore is constructed for 
+        //the first time and should *always* be present.
+        Key key = keyStore.getKey(INDEX_CERT_ALIAS, "".toCharArray());
+        
+        if(key instanceof PrivateKey) {
+            Certificate cert = keyStore.getCertificate(INDEX_CERT_ALIAS);
+            PublicKey publicKey = cert.getPublicKey();
+            return new KeyPair(publicKey, (PrivateKey) key);
+        }            
+       
+        return null;
     }
 
     private void addToStore(String alias, KeyPair kp, Certificate cert) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException, UnrecoverableKeyException
