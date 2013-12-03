@@ -64,6 +64,7 @@ public class KerplappRepo {
     private File xmlIndexJar = null;
     private File xmlIndexJarUnsigned = null;
     public File webRoot = null;
+    public File fdroidDir = null;
     public File repoDir = null;
 
     public KerplappRepo(Context c) {
@@ -82,11 +83,17 @@ public class KerplappRepo {
     }
 
     public void init() throws Exception {
-        repoDir = new File(webRoot, "repo");
+        /* /fdroid/repo is the standard path for user repos */
+        fdroidDir = new File(webRoot, "fdroid");
+        if (!fdroidDir.exists())
+            if (!fdroidDir.mkdir())
+                throw new IllegalStateException("Unable to create empty base: "+fdroidDir);
 
+        repoDir = new File(fdroidDir, "repo");
+        Log.i(TAG, "init in " + repoDir);
         if (!repoDir.exists())
             if (!repoDir.mkdir())
-                throw new IllegalStateException("Unable to create empty repo/ directory");
+                throw new IllegalStateException("Unable to create empty repo: "+repoDir);
 
         xmlIndex = new File(repoDir, "index.xml");
         xmlIndexJar = new File(repoDir, "index.jar");
@@ -129,7 +136,14 @@ public class KerplappRepo {
             }
             in.close();
             out.close();
-            copyFile(indexHtml.getCanonicalPath(), new File(new File(webRoot, "repo"), "index.html"));
+            // make symlinks/copies in each subdir of the repo to make sure that
+            // the user will always find the bootstrap page.
+            File fdroidDirIndex = new File(fdroidDir, "index.html");
+            fdroidDirIndex.delete();
+            copyFile(indexHtml.getCanonicalPath(), fdroidDirIndex);
+            File repoDirIndex = new File(repoDir, "index.html");
+            repoDirIndex.delete();
+            copyFile(indexHtml.getCanonicalPath(), repoDirIndex);
         } catch(IOException e) {
             Log.e(TAG, e.getMessage());
         }
