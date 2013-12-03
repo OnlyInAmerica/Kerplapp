@@ -178,10 +178,12 @@ public class KerplappActivity extends Activity {
         ipAddressString = String.format(Locale.ENGLISH, "%d.%d.%d.%d",
                 (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
+        repo.setIpAddressString(ipAddressString);
 
         repoUriString = String.format(Locale.ENGLISH, "%s://%s:%d/fdroid/repo",
                 useHttps ? "https" : "http",
                 ipAddressString, port);
+        repo.setUriString(repoUriString);
 
         repoSwitch.setText(repoUriString);
         repoSwitch.setTextOn(repoUriString);

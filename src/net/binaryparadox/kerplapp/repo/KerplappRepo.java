@@ -58,6 +58,9 @@ public class KerplappRepo {
     private final KerplappApplication appCtx;
     private final AssetManager   assetManager;
 
+    private String ipAddressString = "UNSET";
+    private String uriString = "UNSET";
+
     private Map<String, App> apps = new HashMap<String, App>();
 
     private File xmlIndex = null;
@@ -80,6 +83,14 @@ public class KerplappRepo {
 
     public File getIndex() {
         return xmlIndex;
+    }
+
+    public void setIpAddressString(String ipAddressString) {
+        this.ipAddressString = ipAddressString;
+    }
+
+    public void setUriString(String uriString) {
+        this.uriString = uriString;
     }
 
     public void init() throws Exception {
@@ -426,7 +437,7 @@ public class KerplappRepo {
         Element repo = doc.createElement("repo");
         repo.setAttribute("icon", "blah.png");
         repo.setAttribute("name", "Kerplapp Repo");
-        repo.setAttribute("url", "http://localhost:8888"); // TODO replace with real IP addr
+        repo.setAttribute("url", uriString);
         rootElement.appendChild(repo);
 
         Element repoDesc = doc.createElement("description");
@@ -479,11 +490,11 @@ public class KerplappRepo {
             application.appendChild(license);
 
             Element categories = doc.createElement("categories");
-            categories.setTextContent("Kerplapp"); // TODO also add hostname/IP comma-separated
+            categories.setTextContent("Kerplapp," + ipAddressString);
             application.appendChild(categories);
 
             Element category = doc.createElement("category");
-            category.setTextContent("Kerplapp"); // TODO also add hostname/IP comma-separated
+            category.setTextContent("Kerplapp," + ipAddressString);
             application.appendChild(category);
 
             Element web = doc.createElement("web");
