@@ -163,11 +163,11 @@ public class KerplappActivity extends Activity {
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
 
         ipAddress = wifiInfo.getIpAddress();
-        ipAddressString = String.format(Locale.CANADA, "%d.%d.%d.%d",
+        ipAddressString = String.format(Locale.ENGLISH, "%d.%d.%d.%d",
                 (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
 
-        repoUriString = String.format(Locale.CANADA, "%s://%s:%d/repo",
+        repoUriString = String.format(Locale.ENGLISH, "%s://%s:%d/repo",
                 useHttps ? "https" : "http",
                 ipAddressString, port);
         
