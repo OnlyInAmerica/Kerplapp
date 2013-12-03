@@ -57,6 +57,7 @@ public class KerplappActivity extends Activity {
     private int ipAddress = 0;
     private int port = 8888;
     private String ipAddressString = null;
+    private String fingerprint = null;
     private String repoUriString = null;
 
     private Thread webServerThread = null;
@@ -173,6 +174,7 @@ public class KerplappActivity extends Activity {
         final KerplappRepo repo = appCtx.getRepo();
 
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        KerplappKeyStore keyStore = appCtx.getKeyStore();
 
         ipAddress = wifiInfo.getIpAddress();
         ipAddressString = String.format(Locale.ENGLISH, "%d.%d.%d.%d",
@@ -180,14 +182,18 @@ public class KerplappActivity extends Activity {
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
         repo.setIpAddressString(ipAddressString);
 
-        repoUriString = String.format(Locale.ENGLISH, "%s://%s:%d/fdroid/repo",
+        fingerprint = keyStore.getFingerprint();
+        repoUriString = String.format(Locale.ENGLISH, "%s://%s%s:%d/fdroid/repo",
                 useHttps ? "https" : "http",
+                fingerprint != null ? fingerprint + "@" : "",
                 ipAddressString, port);
         repo.setUriString(repoUriString);
 
-        repoSwitch.setText(repoUriString);
-        repoSwitch.setTextOn(repoUriString);
-        repoSwitch.setTextOff(repoUriString);
+        // the fingerprint is not useful on the button label
+        String buttonLabel = repoUriString.replace(fingerprint + "@", "");
+        repoSwitch.setText(buttonLabel);
+        repoSwitch.setTextOn(buttonLabel);
+        repoSwitch.setTextOff(buttonLabel);
         ImageView repoQrCodeImageView = (ImageView) findViewById(R.id.repoQrCode);
         // F-Droid currently only understands fdroidrepo:// and fdroidrepos://
         String fdroidrepoUriString = repoUriString.replace("https", "fdroidrepos");
@@ -200,7 +206,6 @@ public class KerplappActivity extends Activity {
         TextView wifiNetworkNameTextView = (TextView) findViewById(R.id.wifiNetworkName);
         wifiNetworkNameTextView.setText(wifiNetworkName);
 
-        KerplappKeyStore keyStore = appCtx.getKeyStore();
 
         // Once the IP address is known we need to generate a self signed
         // certificate to use for HTTPS that has a CN field set to the

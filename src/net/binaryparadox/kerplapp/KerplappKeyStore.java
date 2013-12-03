@@ -23,6 +23,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -34,6 +35,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Formatter;
 
 import javax.net.ssl.KeyManagerFactory;
 
@@ -172,6 +174,31 @@ public class KerplappKeyStore {
         }
 
         return null;
+    }
+
+    // This is take from FDroid: org.fdroid.fdroid.DB.calcFingerprint()
+    // TODO once this code is part of FDroid, replace this with DB.calcFingerprint()
+    public String getFingerprint() {
+        String ret = null;
+        try {
+            Key key = keyStore.getKey(INDEX_CERT_ALIAS, "".toCharArray());
+            if (key instanceof PrivateKey) {
+                Certificate cert = keyStore.getCertificate(INDEX_CERT_ALIAS);
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                digest.update(cert.getEncoded());
+                byte[] fingerprint = digest.digest();
+                Formatter formatter = new Formatter(new StringBuilder());
+                for (int i = 1; i < fingerprint.length; i++) {
+                    formatter.format("%02X", fingerprint[i]);
+                }
+                ret = formatter.toString();
+                formatter.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return ret;
     }
 
     private void addToStore(String alias, KeyPair kp, Certificate cert) throws KeyStoreException,
