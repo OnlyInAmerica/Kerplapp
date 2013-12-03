@@ -115,10 +115,11 @@ public class KerplappRepo {
         }
 
         try {
+            File indexHtml = new File(webRoot, "index.html");
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(assetManager.open("index.template.html"), "UTF-8"));
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(new File(webRoot, "index.html"))));
+                    new FileOutputStream(indexHtml)));
 
             while(in.ready()) { //
                 String line = in.readLine();
@@ -128,7 +129,7 @@ public class KerplappRepo {
             }
             in.close();
             out.close();
-
+            copyFile(indexHtml.getCanonicalPath(), new File(new File(webRoot, "repo"), "index.html"));
         } catch(IOException e) {
             Log.e(TAG, e.getMessage());
         }
@@ -211,6 +212,7 @@ public class KerplappRepo {
             Log.e(TAG, e.getMessage());
             return false;
         }
+        Log.i(TAG, "symlink exitcode: " + exitCode);
         return exitCode == 0;
     }
 
