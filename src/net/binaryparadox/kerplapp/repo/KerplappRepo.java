@@ -207,16 +207,16 @@ public class KerplappRepo {
             Process sh = Runtime.getRuntime().exec("sh");
             OutputStream out = sh.getOutputStream();
             String command = "/system/bin/ln -s " + inFileName + " " + outFile + "\nexit\n";
-            Log.i(TAG, command);
+            Log.i(TAG, "Running: " + command);
             out.write(command.getBytes("ASCII"));
 
-            final char buf[] = new char[10];
+            final char buf[] = new char[40];
             InputStreamReader reader = new InputStreamReader(sh.getInputStream());
             while (reader.read(buf) != -1)
-                Log.i(TAG, "stdout: " + buf.toString());
+                throw new IOException("stdout: " + new String(buf));
             reader = new InputStreamReader(sh.getErrorStream());
             while (reader.read(buf) != -1)
-                Log.i(TAG, "stderr: " + buf.toString());
+                throw new IOException("stderr: " + new String(buf));
 
             exitCode = sh.waitFor();
         } catch (IOException e) {
