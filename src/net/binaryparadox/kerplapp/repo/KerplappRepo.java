@@ -57,7 +57,7 @@ public class KerplappRepo {
     private final PackageManager pm;
     private final KerplappApplication appCtx;
     private final AssetManager   assetManager;
-    
+
     private Map<String, App> apps = new HashMap<String, App>();
 
     private File xmlIndex = null;
@@ -65,12 +65,12 @@ public class KerplappRepo {
     private File xmlIndexJarUnsigned = null;
     public File webRoot = null;
     public File repoDir = null;
-    
+
     public KerplappRepo(Context c) {
         webRoot = c.getFilesDir();
         pm = c.getPackageManager();
         appCtx = (KerplappApplication) c.getApplicationContext();
-        assetManager = c.getAssets();  
+        assetManager = c.getAssets();
     }
 
     public File getRepoDir() {
@@ -83,7 +83,7 @@ public class KerplappRepo {
 
     public void init() throws Exception {
         repoDir = new File(webRoot, "repo");
-            
+
         if (!repoDir.exists())
             if (!repoDir.mkdir())
                 throw new IllegalStateException("Unable to create empty repo/ directory");
@@ -91,35 +91,35 @@ public class KerplappRepo {
         xmlIndex = new File(repoDir, "index.xml");
         xmlIndexJar = new File(repoDir, "index.jar");
         xmlIndexJarUnsigned = new File(repoDir, "index.unsigned.jar");
-        
+
         if (!xmlIndex.exists())
             if (!xmlIndex.createNewFile())
                 throw new IllegalStateException("Unable to create empty index.xml file");
     }
-    
+
     public void writeIndexPage(String repoURL)
     {
         String fdroidPkg = "org.fdroid.fdroid";
         ApplicationInfo appInfo;
-        
+
         String fdroidClientURL = "https://f-droid.org/FDroid.apk";
-       
+
         try {
             appInfo = pm.getApplicationInfo(fdroidPkg, PackageManager.GET_META_DATA);
             File apkFile = new File(appInfo.publicSourceDir);
-            
+
             if(!copyFile(apkFile.getAbsolutePath(), new File(webRoot, "fdroid.client.apk")))
                 fdroidClientURL = "/fdroid.client.apk";
         } catch (NameNotFoundException e) {
           //nop
         }
-        
+
         try {
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(assetManager.open("index.template.html"), "UTF-8"));
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(new File(webRoot, "index.html"))));
-            
+
             while(in.ready()) { //
                 String line = in.readLine();
                 line = line.replaceAll("\\{\\{REPO_URL\\}\\}",   repoURL);
@@ -128,10 +128,10 @@ public class KerplappRepo {
             }
             in.close();
             out.close();
-            
+
         } catch(IOException e) {
             Log.e(TAG, e.getMessage());
-        } 
+        }
     }
 
     private void deleteContents(File path) {
@@ -228,7 +228,7 @@ public class KerplappRepo {
             return false;
         }
     }
-        
+
     public static boolean doCopyStream(InputStream inStream, OutputStream outStream)
     {
         byte[] buf = new byte[1024];
@@ -593,7 +593,7 @@ public class KerplappRepo {
 
         KerplappKeyStore kerplappStore = appCtx.getKeyStore();
         kerplappStore.signZip(xmlIndexJarUnsigned, xmlIndexJar);
-        
+
         xmlIndexJarUnsigned.delete();
     }
 }

@@ -34,7 +34,7 @@ public class Utils {
 
     /**
      * Computes the SHA1 hash of a binary file.
-     * 
+     *
      * @param apkPath the path to a binary file to hash.
      * @return the SHA1 hash of the file provided as an argument.
      */
@@ -74,7 +74,7 @@ public class Utils {
 
     /**
      * Computes the base 16 representation of the byte array argument.
-     * 
+     *
      * @param bytes an array of bytes.
      * @return the bytes represented as a string of hexadecimal digits.
      */

@@ -13,7 +13,7 @@ public class KerplappHTTPD extends SimpleWebServer {
     public KerplappHTTPD(String ipAddressString, int port, File wwwroot, boolean quiet) {
         super(ipAddressString, port, wwwroot, quiet);
     }
-    
+
     public void enableHTTPS(KerplappKeyStore keystore)
     {
         try {
