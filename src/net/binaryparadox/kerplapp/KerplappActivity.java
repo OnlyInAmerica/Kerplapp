@@ -70,9 +70,21 @@ public class KerplappActivity extends Activity {
 
         repoSwitch = (ToggleButton) findViewById(R.id.repoSwitch);
         wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         int wifiState = wifiManager.getWifiState();
         if (wifiState == WifiManager.WIFI_STATE_ENABLED) {
-            setIpAddressFromWifi();
+            WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+            if (ipAddress != wifiInfo.getIpAddress()) {
+                setIpAddressFromWifi();
+                if (repoSwitch.isChecked()) {
+                    stopWebServer();
+                    startWebServer();
+                }
+            }
             wireRepoSwitchToWebServer();
         } else {
             repoSwitch.setText(R.string.enable_wifi);
