@@ -63,6 +63,9 @@ public class KerplappKeyStore {
         this.backingFile = backingFile;
         this.keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
 
+        keyManagerFactory = KeyManagerFactory
+                .getInstance(KeyManagerFactory.getDefaultAlgorithm());
+
         // If there isn't a persisted BKS keystore on disk we need to
         // create a new empty keystore
         if (!backingFile.exists())
@@ -85,11 +88,8 @@ public class KerplappKeyStore {
             addToStore(INDEX_CERT_ALIAS, rndKeys, indexCert);
         } else {
             keyStore.load(new FileInputStream(backingFile), "".toCharArray());
+            keyManagerFactory.init(keyStore, "".toCharArray());
         }
-
-        keyManagerFactory = KeyManagerFactory
-                .getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(keyStore, "".toCharArray());
     }
 
     public void setupHTTPSCertificate(String hostname) throws CertificateException,
@@ -100,8 +100,8 @@ public class KerplappKeyStore {
         KeyPair kerplappKeypair = getKerplappKeypair();
 
         // Once we have a hostname we can generate a self signed cert with a
-        // valid CN field to stash into the keystore in a predictable place. 
-        // If the hostname changes we should run this method again to stomp 
+        // valid CN field to stash into the keystore in a predictable place.
+        // If the hostname changes we should run this method again to stomp
         // old HTTPS_CERT_ALIAS entries.
         X500Name subject = new X500Name("CN=" + hostname);
         Certificate indexCert = generateSelfSignedCertChain(kerplappKeypair, subject);
@@ -122,21 +122,21 @@ public class KerplappKeyStore {
     {
         return keyManagerFactory;
     }
-    
+
     public void signZip(File input, File output)
     {
         try {
             ZipSigner zipSigner = new ZipSigner();
-                        
+
             KeyStore keystore = getKeyStore();
             X509Certificate cert = (X509Certificate) keystore.getCertificate(INDEX_CERT_ALIAS);
-            
+
             KeyPair kp = getKerplappKeypair();
             PrivateKey priv = kp.getPrivate();
 
             zipSigner.setKeys("kerplapp", cert, priv, DEFAULT_SIG_ALG, null);
             zipSigner.signZip(input.getAbsolutePath(), output.getAbsolutePath());
-       
+
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
@@ -153,7 +153,7 @@ public class KerplappKeyStore {
             e.printStackTrace();
         } catch (GeneralSecurityException e) {
             e.printStackTrace();
-        } 
+        }
     }
 
     private KeyPair getKerplappKeypair() throws KeyStoreException, UnrecoverableKeyException,
@@ -161,7 +161,7 @@ public class KerplappKeyStore {
     {
         // You can't store a keypair without an associated certificate chain so,
         // we'll use the INDEX_CERT_ALIAS as the de-facto keypair/certificate
-        // chain. This cert/key is initialized when the KerplappKeyStore is 
+        // chain. This cert/key is initialized when the KerplappKeyStore is
         // constructed for the first time and should *always* be present.
         Key key = keyStore.getKey(INDEX_CERT_ALIAS, "".toCharArray());
 
