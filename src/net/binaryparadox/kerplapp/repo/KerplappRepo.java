@@ -10,6 +10,8 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.os.Build;
 import android.util.Log;
 
+import net.binaryparadox.kerplapp.KerplappApplication;
+import net.binaryparadox.kerplapp.KerplappKeyStore;
 import net.binaryparadox.kerplapp.Utils;
 
 import org.w3c.dom.Document;
@@ -45,12 +47,11 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import kellinwood.security.zipsigner.ZipSigner;
-
 public class KerplappRepo {
     private static final String TAG = KerplappRepo.class.getCanonicalName();
 
-    private PackageManager pm = null;
+    private final PackageManager pm;
+    private final KerplappApplication appCtx;
 
     private Map<String, App> apps = new HashMap<String, App>();
 
@@ -63,6 +64,7 @@ public class KerplappRepo {
     public KerplappRepo(Context c) {
         webRoot = c.getFilesDir();
         pm = c.getPackageManager();
+        appCtx = (KerplappApplication) c.getApplicationContext();
     }
 
     public File getRepoDir() {
@@ -542,18 +544,9 @@ public class KerplappRepo {
         jo.close();
         bo.close();
 
-        // Sign with the built-in default test key/certificate.
-        ZipSigner zipSigner;
-        try {
-            zipSigner = new ZipSigner();
-            zipSigner.setKeymode("testkey");
-            zipSigner.signZip(xmlIndexJarUnsigned.getAbsolutePath(), xmlIndexJar.getAbsolutePath());
-
-            Log.i(TAG, xmlIndexJar.getAbsolutePath());
-            Log.i(TAG, "Signed zip");
-        } catch (Throwable t) {
-            t.printStackTrace();
-            Log.e(TAG, t.getMessage());
-        }
+        KerplappKeyStore kerplappStore = appCtx.getKeyStore();
+        kerplappStore.signZip(xmlIndexJarUnsigned, xmlIndexJar);
+        
+        xmlIndexJarUnsigned.delete();
     }
 }
