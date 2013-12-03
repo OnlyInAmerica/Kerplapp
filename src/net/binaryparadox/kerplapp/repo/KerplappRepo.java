@@ -114,9 +114,10 @@ public class KerplappRepo {
         try {
             appInfo = pm.getApplicationInfo(fdroidPkg, PackageManager.GET_META_DATA);
             File apkFile = new File(appInfo.publicSourceDir);
-
-            if(!copyFile(apkFile.getAbsolutePath(), new File(webRoot, "fdroid.client.apk")))
-                fdroidClientURL = "/fdroid.client.apk";
+            File fdroidApkLink = new File(webRoot, "fdroid.client.apk");
+            fdroidApkLink.delete();
+            if(copyFile(apkFile.getAbsolutePath(), fdroidApkLink))
+                fdroidClientURL = "/" + fdroidApkLink.getName();
         } catch (NameNotFoundException e) {
           //nop
         }
