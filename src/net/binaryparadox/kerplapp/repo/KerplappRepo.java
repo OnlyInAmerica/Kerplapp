@@ -7,6 +7,7 @@ import android.content.pm.FeatureInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.AssetManager;
 import android.os.Build;
 import android.util.Log;
 
@@ -19,6 +20,8 @@ import org.w3c.dom.Element;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -26,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.text.SimpleDateFormat;
@@ -52,7 +56,8 @@ public class KerplappRepo {
 
     private final PackageManager pm;
     private final KerplappApplication appCtx;
-
+    private final AssetManager   assetManager;
+    
     private Map<String, App> apps = new HashMap<String, App>();
 
     private File xmlIndex = null;
@@ -60,11 +65,12 @@ public class KerplappRepo {
     private File xmlIndexJarUnsigned = null;
     public File webRoot = null;
     public File repoDir = null;
-
+    
     public KerplappRepo(Context c) {
         webRoot = c.getFilesDir();
         pm = c.getPackageManager();
         appCtx = (KerplappApplication) c.getApplicationContext();
+        assetManager = c.getAssets();  
     }
 
     public File getRepoDir() {
@@ -77,7 +83,7 @@ public class KerplappRepo {
 
     public void init() throws Exception {
         repoDir = new File(webRoot, "repo");
-
+            
         if (!repoDir.exists())
             if (!repoDir.mkdir())
                 throw new IllegalStateException("Unable to create empty repo/ directory");
@@ -85,18 +91,47 @@ public class KerplappRepo {
         xmlIndex = new File(repoDir, "index.xml");
         xmlIndexJar = new File(repoDir, "index.jar");
         xmlIndexJarUnsigned = new File(repoDir, "index.unsigned.jar");
-
+        
         if (!xmlIndex.exists())
             if (!xmlIndex.createNewFile())
                 throw new IllegalStateException("Unable to create empty index.xml file");
-
-        // Log.i(TAG, xmlIndex.getAbsolutePath());
-        // /data/app\
-
-        // /data/data/net.binaryparadox.kerplapp/files/repo/index.xml
-        /*
-         * if(apps.size() > 0) { //writeIndexXML(); //copyApksToRepo(); }
-         */
+    }
+    
+    public void writeIndexPage(String repoURL)
+    {
+        String fdroidPkg = "org.fdroid.fdroid";
+        ApplicationInfo appInfo;
+        
+        String fdroidClientURL = "https://f-droid.org/FDroid.apk";
+       
+        try {
+            appInfo = pm.getApplicationInfo(fdroidPkg, PackageManager.GET_META_DATA);
+            File apkFile = new File(appInfo.publicSourceDir);
+            
+            if(!copyFile(apkFile.getAbsolutePath(), new File(webRoot, "fdroid.client.apk")))
+                fdroidClientURL = "/fdroid.client.apk";
+        } catch (NameNotFoundException e) {
+          //nop
+        }
+        
+        try {
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(assetManager.open("index.template.html"), "UTF-8"));
+            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(new File(webRoot, "index.html"))));
+            
+            while(in.ready()) { //
+                String line = in.readLine();
+                line = line.replaceAll("\\{\\{REPO_URL\\}\\}",   repoURL);
+                line = line.replaceAll("\\{\\{CLIENT_URL\\}\\}", fdroidClientURL);
+                out.write(line);
+            }
+            in.close();
+            out.close();
+            
+        } catch(IOException e) {
+            Log.e(TAG, e.getMessage());
+        } 
     }
 
     private void deleteContents(File path) {
@@ -146,8 +181,9 @@ public class KerplappRepo {
         /* use symlinks if they are available, otherwise fall back to copying */
         if (new File("/system/bin/ln").exists()) {
             return doSymLink(inFileName, outFile);
-        } else
+        } else {
             return doCopyFile(inFileName, outFile);
+        }
     }
 
     public static boolean doSymLink(String inFileName, File outFile) {
@@ -169,18 +205,16 @@ public class KerplappRepo {
 
             exitCode = sh.waitFor();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
             return false;
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
             return false;
         }
         return exitCode == 0;
     }
 
     public static boolean doCopyFile(String inFileName, File outFile) {
-        byte[] buf = new byte[1024];
-        int readBytes;
         InputStream inStream = null;
         OutputStream outStream = null;
 
@@ -188,6 +222,19 @@ public class KerplappRepo {
             inStream = new FileInputStream(inFileName);
             outStream = new FileOutputStream(outFile);
 
+            return doCopyStream(inStream, outStream);
+        } catch (IOException e) {
+            Log.e(TAG, e.getMessage());
+            return false;
+        }
+    }
+        
+    public static boolean doCopyStream(InputStream inStream, OutputStream outStream)
+    {
+        byte[] buf = new byte[1024];
+        int readBytes;
+        try
+        {
             while ((readBytes = inStream.read(buf)) > 0) {
                 outStream.write(buf, 0, readBytes);
             }
@@ -211,8 +258,8 @@ public class KerplappRepo {
             appInfo = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA);
             packageInfo = pm.getPackageInfo(packageName, PackageManager.GET_SIGNATURES
                     | PackageManager.GET_PERMISSIONS);
-        } catch (NameNotFoundException e1) {
-            e1.printStackTrace();
+        } catch (NameNotFoundException e) {
+            Log.e(TAG, e.getMessage());
             return null;
         }
 

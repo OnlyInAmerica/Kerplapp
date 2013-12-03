@@ -34,6 +34,8 @@ import com.google.zxing.WriterException;
 import com.google.zxing.encode.Contents;
 import com.google.zxing.encode.QRCodeEncoder;
 
+import net.binaryparadox.kerplapp.repo.KerplappRepo;
+
 import org.spongycastle.operator.OperatorCreationException;
 
 import java.io.FileNotFoundException;
@@ -154,7 +156,10 @@ public class KerplappActivity extends Activity {
     private void setIpAddressFromWifi() {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final boolean useHttps = prefs.getBoolean("use_https", false);
-
+        
+        final KerplappApplication appCtx = (KerplappApplication) getApplication();              
+        final KerplappRepo repo = appCtx.getRepo();
+               
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
 
         ipAddress = wifiInfo.getIpAddress();
@@ -165,6 +170,7 @@ public class KerplappActivity extends Activity {
         repoUriString = String.format(Locale.CANADA, "%s://%s:%d/repo",
                 useHttps ? "https" : "http",
                 ipAddressString, port);
+        
 
         repoSwitch.setText(repoUriString);
         repoSwitch.setTextOn(repoUriString);
@@ -174,21 +180,19 @@ public class KerplappActivity extends Activity {
         String fdroidrepoUriString = repoUriString.replace("https", "fdroidrepos");
         fdroidrepoUriString = fdroidrepoUriString.replace("http", "fdroidrepo");
         repoQrCodeImageView.setImageBitmap(generateQrCode(fdroidrepoUriString));
-
+        
+        repo.writeIndexPage(fdroidrepoUriString);
+        
         wifiNetworkName = wifiInfo.getSSID();
         TextView wifiNetworkNameTextView = (TextView) findViewById(R.id.wifiNetworkName);
         wifiNetworkNameTextView.setText(wifiNetworkName);
 
-        KerplappApplication appCtx = (KerplappApplication) getApplication();
         KerplappKeyStore keyStore = appCtx.getKeyStore();
 
         // Once the IP address is known we need to generate a self signed
-        // certificate
-        // to use for HTTPS that has a CN field set to the ipAddressString.
-        // We'll generate
-        // it even if useHttps is false to simplify having to detect when that
-        // preference
-        // changes.
+        // certificate to use for HTTPS that has a CN field set to the 
+        // ipAddressString. We'll generate it even if useHttps is false
+        // to simplify having to detect when that preference changes.
         try {
             keyStore.setupHTTPSCertificate(ipAddressString);
         } catch (UnrecoverableKeyException e1) {
