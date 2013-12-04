@@ -196,11 +196,11 @@ public class KerplappActivity extends Activity {
         repoSwitch.setTextOff(buttonLabel);
         ImageView repoQrCodeImageView = (ImageView) findViewById(R.id.repoQrCode);
         // F-Droid currently only understands fdroidrepo:// and fdroidrepos://
-        String fdroidrepoUriString = repoUriString.replace("https", "fdroidrepos");
-        fdroidrepoUriString = fdroidrepoUriString.replace("http", "fdroidrepo");
-        repoQrCodeImageView.setImageBitmap(generateQrCode(fdroidrepoUriString));
-
+        String fdroidrepoUriString = repoUriString.replaceAll("^http", "fdroidrepo");
         repo.writeIndexPage(fdroidrepoUriString);
+        // set URL to UPPER for compact QR Code, FDroid will translate it back
+        fdroidrepoUriString = fdroidrepoUriString.toUpperCase(Locale.ENGLISH);
+        repoQrCodeImageView.setImageBitmap(generateQrCode(fdroidrepoUriString));
 
         wifiNetworkName = wifiInfo.getSSID();
         TextView wifiNetworkNameTextView = (TextView) findViewById(R.id.wifiNetworkName);
