@@ -1,6 +1,7 @@
 
 package net.binaryparadox.kerplapp;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -101,6 +102,7 @@ public class AppSelectActivity extends FragmentActivity {
         @Override
         protected void onPostExecute(Void result) {
             progressDialog.dismiss();
+            setResult(Activity.RESULT_OK);
             Toast.makeText(getBaseContext(), R.string.updated_local_repo, Toast.LENGTH_SHORT)
                     .show();
             finish();

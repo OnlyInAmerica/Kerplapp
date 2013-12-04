@@ -60,6 +60,7 @@ public class KerplappActivity extends Activity {
     private String fingerprint = null;
     private String repoUriString = null;
 
+    private int SET_IP_ADDRESS;
     private Thread webServerThread = null;
     private Handler handler = null;
 
@@ -111,7 +112,7 @@ public class KerplappActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_setup_repo:
-                startActivity(new Intent(this, AppSelectActivity.class));
+                startActivityForResult(new Intent(this, AppSelectActivity.class), SET_IP_ADDRESS);
                 return true;
             case R.id.menu_send_to_fdroid:
                 if (repoUriString == null) {
@@ -126,10 +127,17 @@ public class KerplappActivity extends Activity {
                 }
                 return true;
             case R.id.menu_settings:
-                startActivity(new Intent(this, SettingsActivity.class));
+                startActivityForResult(new Intent(this, SettingsActivity.class), SET_IP_ADDRESS);
                 return true;
         }
         return false;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SET_IP_ADDRESS && resultCode == Activity.RESULT_OK) {
+            setIpAddressFromWifi();
+        }
     }
 
     @Override
