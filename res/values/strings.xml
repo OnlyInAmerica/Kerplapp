@@ -17,6 +17,7 @@
     <string name="enable_wifi">Enable WiFi</string>
     <string name="enabling_wifi">Enabling WiFi&#8230;</string>
     <string name="wifi_network">WiFi Network:</string>
+    <string name="fingerprint">Fingerprint:</string>
     <string name="icon">icon</string>
     <string name="no_applications_found">No applications found</string>
 

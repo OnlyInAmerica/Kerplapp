@@ -206,6 +206,13 @@ public class KerplappActivity extends Activity {
         TextView wifiNetworkNameTextView = (TextView) findViewById(R.id.wifiNetworkName);
         wifiNetworkNameTextView.setText(wifiNetworkName);
 
+        TextView fingerprintTextView = (TextView) findViewById(R.id.fingerprint);
+        if (fingerprint != null) {
+            fingerprintTextView.setVisibility(View.VISIBLE);
+            fingerprintTextView.setText(fingerprint);
+        } else {
+            fingerprintTextView.setVisibility(View.GONE);
+        }
 
         // Once the IP address is known we need to generate a self signed
         // certificate to use for HTTPS that has a CN field set to the
