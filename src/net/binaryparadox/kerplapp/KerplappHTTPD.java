@@ -19,7 +19,7 @@ public class KerplappHTTPD extends SimpleWebServer {
         try {
             SSLServerSocketFactory factory = NanoHTTPD.makeSSLSocketFactory(
                         keystore.getKeyStore(),
-                        keystore.getKeyManagerFactory());
+                        keystore.getKeyManagers());
             makeSecure(factory);
         } catch (IOException e) {
             e.printStackTrace();
