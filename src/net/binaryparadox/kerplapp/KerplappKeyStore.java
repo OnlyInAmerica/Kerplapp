@@ -1,11 +1,19 @@
 
 package net.binaryparadox.kerplapp;
 
+import org.spongycastle.asn1.ASN1EncodableVector;
 import org.spongycastle.asn1.ASN1Sequence;
+import org.spongycastle.asn1.DEROctetString;
+import org.spongycastle.asn1.DERSequence;
 import org.spongycastle.asn1.x500.X500Name;
+import org.spongycastle.asn1.x509.GeneralName;
+import org.spongycastle.asn1.x509.GeneralNames;
 import org.spongycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.spongycastle.asn1.x509.X509Extension;
+import org.spongycastle.asn1.x509.X509Extensions;
 import org.spongycastle.cert.X509CertificateHolder;
 import org.spongycastle.cert.X509v1CertificateBuilder;
+import org.spongycastle.cert.X509v3CertificateBuilder;
 import org.spongycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.spongycastle.operator.ContentSigner;
 import org.spongycastle.operator.OperatorCreationException;
@@ -106,7 +114,8 @@ public class KerplappKeyStore {
         // If the hostname changes we should run this method again to stomp
         // old HTTPS_CERT_ALIAS entries.
         X500Name subject = new X500Name("CN=" + hostname);
-        Certificate indexCert = generateSelfSignedCertChain(kerplappKeypair, subject);
+
+        Certificate indexCert = generateSelfSignedCertChain(kerplappKeypair, subject, hostname);
 
         addToStore(HTTP_CERT_ALIAS, kerplappKeypair, indexCert);
     }
@@ -222,9 +231,15 @@ public class KerplappKeyStore {
         KeyPair keyPair = keyPairGenerator.generateKeyPair();
         return keyPair;
     }
-
+    
     private Certificate generateSelfSignedCertChain(KeyPair kp, X500Name subject)
-            throws CertificateException, OperatorCreationException
+            throws CertificateException, OperatorCreationException, IOException
+    {
+    	return generateSelfSignedCertChain(kp, subject, null);
+    }
+
+    private Certificate generateSelfSignedCertChain(KeyPair kp, X500Name subject, String hostname)
+            throws CertificateException, OperatorCreationException, IOException
     {
         SecureRandom rand = new SecureRandom();
         PrivateKey privKey = kp.getPrivate();
@@ -240,15 +255,26 @@ public class KerplappKeyStore {
         c.setTime(startDate);
         c.add(Calendar.YEAR, 1);
         Date endDate = c.getTime();
-
-        X509v1CertificateBuilder v1CertGen = new X509v1CertificateBuilder(
+        
+        X509v3CertificateBuilder v3CertGen = new X509v3CertificateBuilder(
                 subject,
                 BigInteger.valueOf(rand.nextLong()),
                 startDate, endDate,
                 subject,
                 subPubKeyInfo);
-
-        X509CertificateHolder certHolder = v1CertGen.build(sigGen);
+        
+        if(hostname != null)
+        {
+        	
+	        GeneralNames subjectAltName = new GeneralNames(
+	                new GeneralName(GeneralName.iPAddress, hostname));
+	
+	        //X509Extension extension = new X509Extension(false, new DEROctetString(subjectAltName));
+	
+	        v3CertGen.addExtension(X509Extension.subjectAlternativeName, false, subjectAltName);
+        }
+        
+        X509CertificateHolder certHolder = v3CertGen.build(sigGen);
         return new JcaX509CertificateConverter().getCertificate(certHolder);
     }
 
