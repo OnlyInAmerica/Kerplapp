@@ -23,11 +23,14 @@ package net.binaryparadox.kerplapp;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.support.v4.content.AsyncTaskLoader;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -79,6 +82,8 @@ public class AppListLoader extends AsyncTaskLoader<List<AppEntry>> {
         }
 
         final Context context = getContext();
+        final KerplappApplication app = (KerplappApplication) context.getApplicationContext();
+        final File repoDir = app.getRepo().repoDir;
 
         // Create corresponding array of entries and load their labels
         List<AppEntry> entries = new ArrayList<AppEntry>(apps.size());
@@ -86,6 +91,22 @@ public class AppListLoader extends AsyncTaskLoader<List<AppEntry>> {
             AppEntry entry = new AppEntry(this, applicationInfo);
             entry.loadLabel(context);
             entries.add(entry);
+            
+            // Need to load the package info to get the app version code.
+            // We can use the repo dir, the package name and the version code to
+            // determine if the app is already in the repo to preselect it.
+            PackageInfo packageInfo = null;
+            try {
+            	packageInfo = pm.getPackageInfo(entry.getPackageName(), 0);
+            } catch (NameNotFoundException e) {
+            	//NOP -- shouldn't ever happen, we are iterating a list of installed packages
+            }
+            
+            String apkName = packageInfo.packageName + "_" + packageInfo.versionCode +".apk";
+            File apkFile = new File(repoDir, apkName);
+            
+            if(apkFile.exists())
+            	entry.setEnabled(true);
         }
 
         Collections.sort(entries, Comparator.ALPHA_COMPARATOR);
