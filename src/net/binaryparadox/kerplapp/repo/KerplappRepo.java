@@ -61,7 +61,7 @@ public class KerplappRepo {
 
     private final PackageManager pm;
     private final KerplappApplication appCtx;
-    private final AssetManager   assetManager;
+    private final AssetManager assetManager;
     private final SharedPreferences prefs;
 
     private String ipAddressString = "UNSET";
@@ -105,13 +105,13 @@ public class KerplappRepo {
         fdroidDir = new File(webRoot, "fdroid");
         if (!fdroidDir.exists())
             if (!fdroidDir.mkdir())
-                throw new IllegalStateException("Unable to create empty base: "+fdroidDir);
+                throw new IllegalStateException("Unable to create empty base: " + fdroidDir);
 
         repoDir = new File(fdroidDir, "repo");
         Log.i(TAG, "init in " + repoDir);
         if (!repoDir.exists())
             if (!repoDir.mkdir())
-                throw new IllegalStateException("Unable to create empty repo: "+repoDir);
+                throw new IllegalStateException("Unable to create empty repo: " + repoDir);
 
         xmlIndex = new File(repoDir, "index.xml");
         xmlIndexJar = new File(repoDir, "index.jar");
@@ -134,10 +134,10 @@ public class KerplappRepo {
             File apkFile = new File(appInfo.publicSourceDir);
             File fdroidApkLink = new File(webRoot, "fdroid.client.apk");
             fdroidApkLink.delete();
-            if(copyFile(apkFile.getAbsolutePath(), fdroidApkLink))
+            if (copyFile(apkFile.getAbsolutePath(), fdroidApkLink))
                 fdroidClientURL = "/" + fdroidApkLink.getName();
         } catch (NameNotFoundException e) {
-          //nop
+            // nop
         }
 
         try {
@@ -147,9 +147,9 @@ public class KerplappRepo {
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(indexHtml)));
 
-            while(in.ready()) { //
+            while (in.ready()) { //
                 String line = in.readLine();
-                line = line.replaceAll("\\{\\{REPO_URL\\}\\}",   repoURL);
+                line = line.replaceAll("\\{\\{REPO_URL\\}\\}", repoURL);
                 line = line.replaceAll("\\{\\{CLIENT_URL\\}\\}", fdroidClientURL);
                 out.write(line);
             }
@@ -163,7 +163,7 @@ public class KerplappRepo {
             File repoDirIndex = new File(repoDir, "index.html");
             repoDirIndex.delete();
             copyFile(indexHtml.getCanonicalPath(), repoDirIndex);
-        } catch(IOException e) {
+        } catch (IOException e) {
             Log.e(TAG, e.getMessage());
         }
     }

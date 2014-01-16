@@ -1,3 +1,4 @@
+
 package net.binaryparadox.kerplapp;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -14,12 +15,11 @@ public class KerplappHTTPD extends SimpleWebServer {
         super(ipAddressString, port, wwwroot, quiet);
     }
 
-    public void enableHTTPS(KerplappKeyStore keystore)
-    {
+    public void enableHTTPS(KerplappKeyStore keystore) {
         try {
             SSLServerSocketFactory factory = NanoHTTPD.makeSSLSocketFactory(
-                        keystore.getKeyStore(),
-                        keystore.getKeyManagers());
+                    keystore.getKeyStore(),
+                    keystore.getKeyManagers());
             makeSecure(factory);
         } catch (IOException e) {
             e.printStackTrace();

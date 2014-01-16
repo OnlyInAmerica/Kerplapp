@@ -49,7 +49,7 @@ import javax.net.ssl.X509KeyManager;
 import kellinwood.security.zipsigner.ZipSigner;
 
 public class KerplappKeyStore {
-    //TODO: Address exception handling in a uniform way across the KeyStore & application
+    // TODO: Address exception handling in a uniform way across the KeyStore & application
 
     static {
         Security.insertProviderAt(
@@ -103,15 +103,14 @@ public class KerplappKeyStore {
             KeyManager wrappedKeyManager = new KerplappKeyManager(
                     (X509KeyManager) defaultKeyManager);
             keyManagers = new KeyManager[] {
-                wrappedKeyManager
+                    wrappedKeyManager
             };
         }
     }
 
     public void setupHTTPSCertificate(String hostname) throws CertificateException,
             OperatorCreationException, KeyStoreException, NoSuchAlgorithmException,
-            FileNotFoundException, IOException, UnrecoverableKeyException
-    {
+            FileNotFoundException, IOException, UnrecoverableKeyException {
         // Get the existing private/public keypair to use for the HTTPS cert
         KeyPair kerplappKeypair = getKerplappKeypair();
 
@@ -130,18 +129,15 @@ public class KerplappKeyStore {
         return backingFile;
     }
 
-    public KeyStore getKeyStore()
-    {
+    public KeyStore getKeyStore() {
         return keyStore;
     }
 
-    public KeyManager[] getKeyManagers()
-    {
+    public KeyManager[] getKeyManagers() {
         return keyManagers;
     }
 
-    public void signZip(File input, File output)
-    {
+    public void signZip(File input, File output) {
         try {
             ZipSigner zipSigner = new ZipSigner();
 
@@ -174,8 +170,7 @@ public class KerplappKeyStore {
     }
 
     private KeyPair getKerplappKeypair() throws KeyStoreException, UnrecoverableKeyException,
-            NoSuchAlgorithmException
-    {
+            NoSuchAlgorithmException {
         // You can't store a keypair without an associated certificate chain so,
         // we'll use the INDEX_CERT_ALIAS as the de-facto keypair/certificate
         // chain. This cert/key is initialized when the KerplappKeyStore is
@@ -218,8 +213,7 @@ public class KerplappKeyStore {
 
     private void addToStore(String alias, KeyPair kp, Certificate cert) throws KeyStoreException,
             NoSuchAlgorithmException, CertificateException, FileNotFoundException, IOException,
-            UnrecoverableKeyException
-    {
+            UnrecoverableKeyException {
         Certificate[] chain = new Certificate[] {
                 cert
         };
@@ -240,12 +234,11 @@ public class KerplappKeyStore {
         KeyManager defaultKeyManager = keyManagerFactory.getKeyManagers()[0];
         KeyManager wrappedKeyManager = new KerplappKeyManager((X509KeyManager) defaultKeyManager);
         keyManagers = new KeyManager[] {
-            wrappedKeyManager
+                wrappedKeyManager
         };
     }
 
-    private KeyPair generateRandomKeypair() throws NoSuchAlgorithmException
-    {
+    private KeyPair generateRandomKeypair() throws NoSuchAlgorithmException {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(DEFAULT_KEY_ALGO);
         keyPairGenerator.initialize(DEFAULT_KEY_BITS);
         KeyPair keyPair = keyPairGenerator.generateKeyPair();
@@ -253,14 +246,12 @@ public class KerplappKeyStore {
     }
 
     private Certificate generateSelfSignedCertChain(KeyPair kp, X500Name subject)
-            throws CertificateException, OperatorCreationException, IOException
-    {
+            throws CertificateException, OperatorCreationException, IOException {
         return generateSelfSignedCertChain(kp, subject, null);
     }
 
     private Certificate generateSelfSignedCertChain(KeyPair kp, X500Name subject, String hostname)
-            throws CertificateException, OperatorCreationException, IOException
-    {
+            throws CertificateException, OperatorCreationException, IOException {
         SecureRandom rand = new SecureRandom();
         PrivateKey privKey = kp.getPrivate();
         PublicKey pubKey = kp.getPublic();
@@ -304,8 +295,7 @@ public class KerplappKeyStore {
      * for it's chosen server alias. All other operations are deferred to the
      * wrapped X509KeyManager.
      */
-    private static class KerplappKeyManager implements X509KeyManager
-    {
+    private static class KerplappKeyManager implements X509KeyManager {
         private final X509KeyManager wrapped;
 
         private KerplappKeyManager(X509KeyManager wrapped)

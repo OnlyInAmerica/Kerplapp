@@ -78,15 +78,14 @@ public class AppListFragment extends ListFragment implements LoaderCallbacks<Lis
     @Override
     public void onLoadFinished(Loader<List<AppEntry>> loader, List<AppEntry> data) {
         adapter.setData(data);
-        
+
         // The loader may return items that are "pre-enabled" because
         // the APK was already in the repo. We need to find these items
         // to add them to the selectedApps list so that the user doesn't
         // have to click the highlighted row for it to be added to the Set
         // otherwise it is just visually selected and not logically selected.
-        for(AppEntry e : data)
-        {
-            if(e.isEnabled() && !selectedApps.contains(e))
+        for (AppEntry e : data) {
+            if (e.isEnabled() && !selectedApps.contains(e))
                 selectedApps.add(e.getPackageName());
         }
 
