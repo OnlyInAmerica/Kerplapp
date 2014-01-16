@@ -1,18 +1,13 @@
 
 package net.binaryparadox.kerplapp;
 
-import org.spongycastle.asn1.ASN1EncodableVector;
 import org.spongycastle.asn1.ASN1Sequence;
-import org.spongycastle.asn1.DEROctetString;
-import org.spongycastle.asn1.DERSequence;
 import org.spongycastle.asn1.x500.X500Name;
 import org.spongycastle.asn1.x509.GeneralName;
 import org.spongycastle.asn1.x509.GeneralNames;
 import org.spongycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.spongycastle.asn1.x509.X509Extension;
-import org.spongycastle.asn1.x509.X509Extensions;
 import org.spongycastle.cert.X509CertificateHolder;
-import org.spongycastle.cert.X509v1CertificateBuilder;
 import org.spongycastle.cert.X509v3CertificateBuilder;
 import org.spongycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.spongycastle.operator.ContentSigner;
@@ -25,6 +20,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.security.Key;
 import java.security.KeyPair;
@@ -33,6 +29,7 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
@@ -45,7 +42,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Formatter;
 
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.X509KeyManager;
 
 import kellinwood.security.zipsigner.ZipSigner;
 
@@ -65,16 +64,13 @@ public class KerplappKeyStore {
     private static final int DEFAULT_KEY_BITS = 2048;
 
     private KeyStore keyStore;
-    private KeyManagerFactory keyManagerFactory;
+    private KeyManager[] keyManagers;
     private File backingFile;
 
     public KerplappKeyStore(File backingFile) throws KeyStoreException, NoSuchAlgorithmException,
             CertificateException, IOException, OperatorCreationException, UnrecoverableKeyException {
         this.backingFile = backingFile;
         this.keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-
-        keyManagerFactory = KeyManagerFactory
-                .getInstance(KeyManagerFactory.getDefaultAlgorithm());
 
         // If there isn't a persisted BKS keystore on disk we need to
         // create a new empty keystore
@@ -98,7 +94,17 @@ public class KerplappKeyStore {
             addToStore(INDEX_CERT_ALIAS, rndKeys, indexCert);
         } else {
             keyStore.load(new FileInputStream(backingFile), "".toCharArray());
+
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory
+                    .getInstance(KeyManagerFactory.getDefaultAlgorithm());
+
             keyManagerFactory.init(keyStore, "".toCharArray());
+            KeyManager defaultKeyManager = keyManagerFactory.getKeyManagers()[0];
+            KeyManager wrappedKeyManager = new KerplappKeyManager(
+                    (X509KeyManager) defaultKeyManager);
+            keyManagers = new KeyManager[] {
+                wrappedKeyManager
+            };
         }
     }
 
@@ -129,9 +135,9 @@ public class KerplappKeyStore {
         return keyStore;
     }
 
-    public KeyManagerFactory getKeyManagerFactory()
+    public KeyManager[] getKeyManagers()
     {
-        return keyManagerFactory;
+        return keyManagers;
     }
 
     public void signZip(File input, File output)
@@ -221,7 +227,21 @@ public class KerplappKeyStore {
                 "".toCharArray(), chain);
 
         keyStore.store(new FileOutputStream(backingFile), "".toCharArray());
+
+        /*
+         * After adding an entry to the keystore we need to create a fresh
+         * KeyManager by reinitializing the KeyManagerFactory with the new key
+         * store content and then rewrapping the default KeyManager with our own
+         */
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory
+                .getInstance(KeyManagerFactory.getDefaultAlgorithm());
+
         keyManagerFactory.init(keyStore, "".toCharArray());
+        KeyManager defaultKeyManager = keyManagerFactory.getKeyManagers()[0];
+        KeyManager wrappedKeyManager = new KerplappKeyManager((X509KeyManager) defaultKeyManager);
+        keyManagers = new KeyManager[] {
+            wrappedKeyManager
+        };
     }
 
     private KeyPair generateRandomKeypair() throws NoSuchAlgorithmException
@@ -231,11 +251,11 @@ public class KerplappKeyStore {
         KeyPair keyPair = keyPairGenerator.generateKeyPair();
         return keyPair;
     }
-    
+
     private Certificate generateSelfSignedCertChain(KeyPair kp, X500Name subject)
             throws CertificateException, OperatorCreationException, IOException
     {
-    	return generateSelfSignedCertChain(kp, subject, null);
+        return generateSelfSignedCertChain(kp, subject, null);
     }
 
     private Certificate generateSelfSignedCertChain(KeyPair kp, X500Name subject, String hostname)
@@ -255,27 +275,78 @@ public class KerplappKeyStore {
         c.setTime(startDate);
         c.add(Calendar.YEAR, 1);
         Date endDate = c.getTime();
-        
+
         X509v3CertificateBuilder v3CertGen = new X509v3CertificateBuilder(
                 subject,
                 BigInteger.valueOf(rand.nextLong()),
                 startDate, endDate,
                 subject,
                 subPubKeyInfo);
-        
-        if(hostname != null)
+
+        if (hostname != null)
         {
-        	
-	        GeneralNames subjectAltName = new GeneralNames(
-	                new GeneralName(GeneralName.iPAddress, hostname));
-	
-	        //X509Extension extension = new X509Extension(false, new DEROctetString(subjectAltName));
-	
-	        v3CertGen.addExtension(X509Extension.subjectAlternativeName, false, subjectAltName);
+
+            GeneralNames subjectAltName = new GeneralNames(
+                    new GeneralName(GeneralName.iPAddress, hostname));
+
+            // X509Extension extension = new X509Extension(false, new
+            // DEROctetString(subjectAltName));
+
+            v3CertGen.addExtension(X509Extension.subjectAlternativeName, false, subjectAltName);
         }
-        
+
         X509CertificateHolder certHolder = v3CertGen.build(sigGen);
         return new JcaX509CertificateConverter().getCertificate(certHolder);
+    }
+
+    /*
+     * A X509KeyManager that always returns the KerplappKeyStore.HTTP_CERT_ALIAS
+     * for it's chosen server alias. All other operations are deferred to the
+     * wrapped X509KeyManager.
+     */
+    private static class KerplappKeyManager implements X509KeyManager
+    {
+        private final X509KeyManager wrapped;
+
+        private KerplappKeyManager(X509KeyManager wrapped)
+        {
+            this.wrapped = wrapped;
+        }
+
+        @Override
+        public String chooseClientAlias(String[] keyType, Principal[] issuers,
+                Socket socket) {
+            return wrapped.chooseClientAlias(keyType, issuers, socket);
+        }
+
+        @Override
+        public String chooseServerAlias(String keyType, Principal[] issuers,
+                Socket socket) {
+            /*
+             * Always use the HTTP_CERT_ALIAS for the server alias.
+             */
+            return KerplappKeyStore.HTTP_CERT_ALIAS;
+        }
+
+        @Override
+        public X509Certificate[] getCertificateChain(String alias) {
+            return wrapped.getCertificateChain(alias);
+        }
+
+        @Override
+        public String[] getClientAliases(String keyType, Principal[] issuers) {
+            return wrapped.getClientAliases(keyType, issuers);
+        }
+
+        @Override
+        public PrivateKey getPrivateKey(String alias) {
+            return wrapped.getPrivateKey(alias);
+        }
+
+        @Override
+        public String[] getServerAliases(String keyType, Principal[] issuers) {
+            return wrapped.getServerAliases(keyType, issuers);
+        }
     }
 
 }
