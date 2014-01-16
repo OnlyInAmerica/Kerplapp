@@ -7,4 +7,11 @@
         android:summary="Generate a local self-signed cert and enable HTTPS on the local repository."
         android:title="Use HTTPS for local repo" />
 
+    <EditTextPreference
+        android:defaultValue="14"
+        android:inputType="number"
+        android:key="max_repo_age_days"
+        android:summary="Maximum number of days an F-droid client will consider the repository index up to date."
+        android:title="Repo Max Age (days)" />
+
 </PreferenceScreen>

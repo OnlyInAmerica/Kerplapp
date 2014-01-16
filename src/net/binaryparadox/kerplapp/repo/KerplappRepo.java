@@ -2,6 +2,7 @@
 package net.binaryparadox.kerplapp.repo;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageInfo;
@@ -9,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetManager;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import net.binaryparadox.kerplapp.KerplappApplication;
@@ -54,9 +56,13 @@ import javax.xml.transform.stream.StreamResult;
 public class KerplappRepo {
     private static final String TAG = KerplappRepo.class.getCanonicalName();
 
+    // For ref, official F-droid repo presently uses a maxage attribute of '14' days.
+    private static final int DEFAULT_REPO_MAX_AGE_DAYS = 14;
+
     private final PackageManager pm;
     private final KerplappApplication appCtx;
     private final AssetManager   assetManager;
+    private final SharedPreferences prefs;
 
     private String ipAddressString = "UNSET";
     private String uriString = "UNSET";
@@ -75,6 +81,7 @@ public class KerplappRepo {
         pm = c.getPackageManager();
         appCtx = (KerplappApplication) c.getApplicationContext();
         assetManager = c.getAssets();
+        prefs = PreferenceManager.getDefaultSharedPreferences(c);
     }
 
     public File getRepoDir() {
@@ -434,10 +441,13 @@ public class KerplappRepo {
         Element rootElement = doc.createElement("fdroid");
         doc.appendChild(rootElement);
 
+        int repoMaxAge = prefs.getInt("max_repo_age_days", DEFAULT_REPO_MAX_AGE_DAYS);
+
         Element repo = doc.createElement("repo");
         repo.setAttribute("icon", "blah.png");
         repo.setAttribute("name", "Kerplapp Repo");
         repo.setAttribute("url", uriString);
+        repo.setAttribute("maxage", String.valueOf(repoMaxAge));
         rootElement.appendChild(repo);
 
         Element repoDesc = doc.createElement("description");
