@@ -35,6 +35,7 @@ import com.google.zxing.encode.Contents;
 import com.google.zxing.encode.QRCodeEncoder;
 
 import net.binaryparadox.kerplapp.network.KerplappHTTPD;
+import net.binaryparadox.kerplapp.network.NsdHelper;
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
 import org.spongycastle.operator.OperatorCreationException;
@@ -64,6 +65,8 @@ public class KerplappActivity extends Activity {
     private int SET_IP_ADDRESS;
     private Thread webServerThread = null;
     private Handler handler = null;
+    
+    private NsdHelper nsdHelper = null;
 
     /** Called when the activity is first created. */
     @Override
@@ -73,6 +76,9 @@ public class KerplappActivity extends Activity {
 
         repoSwitch = (ToggleButton) findViewById(R.id.repoSwitch);
         wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+        
+        nsdHelper = new NsdHelper(this);
+        nsdHelper.initializeNsd();
     }
 
     @Override
@@ -88,6 +94,7 @@ public class KerplappActivity extends Activity {
                     startWebServer();
                 }
             }
+
             wireRepoSwitchToWebServer();
         } else {
             repoSwitch.setText(R.string.enable_wifi);
@@ -99,7 +106,30 @@ public class KerplappActivity extends Activity {
                     enableWifi();
                 }
             });
+            
+            if(nsdHelper != null)
+            {
+                nsdHelper.tearDown();
+            }
         }
+    }
+    
+    @Override
+    public void onPause() {
+        if (nsdHelper != null)
+        {
+            nsdHelper.tearDown();
+        }
+        super.onPause();
+    }
+    
+    @Override
+    public void onDestroy() {
+        if(nsdHelper != null)
+        {
+            nsdHelper.tearDown();
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -349,6 +379,14 @@ public class KerplappActivity extends Activity {
         };
         webServerThread = new Thread(webServer);
         webServerThread.start();
+        
+        if(nsdHelper != null && repoSwitch.isChecked())
+        {
+            Log.i(TAG, "Registering Kerplapp service with NSD");
+            nsdHelper.registerService(port);
+        }
+
+        nsdHelper = nsdHelper !=  null ? nsdHelper : nsdHelper;
     }
 
     private void stopWebServer() {
