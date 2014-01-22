@@ -34,6 +34,7 @@ import com.google.zxing.WriterException;
 import com.google.zxing.encode.Contents;
 import com.google.zxing.encode.QRCodeEncoder;
 
+import net.binaryparadox.kerplapp.network.KerplappHTTPD;
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
 import org.spongycastle.operator.OperatorCreationException;
