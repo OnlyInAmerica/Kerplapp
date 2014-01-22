@@ -1,5 +1,5 @@
 
-package net.binaryparadox.kerplapp;
+package net.binaryparadox.kerplapp.network;
 
 import fi.iki.elonen.NanoHTTPD;
 import fi.iki.elonen.SimpleWebServer;
@@ -8,6 +8,8 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.net.ssl.SSLServerSocketFactory;
+
+import net.binaryparadox.kerplapp.KerplappKeyStore;
 
 public class KerplappHTTPD extends SimpleWebServer {
 
