@@ -2,6 +2,7 @@
 package net.binaryparadox.kerplapp;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -13,7 +14,11 @@ import android.graphics.Point;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.nfc.NdefMessage;
+import android.nfc.NdefRecord;
+import android.nfc.NfcAdapter;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -175,6 +180,7 @@ public class KerplappActivity extends Activity {
         });
     }
 
+    @TargetApi(14)
     private void setIpAddressFromWifi() {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final boolean useHttps = prefs.getBoolean("use_https", false);
@@ -247,6 +253,17 @@ public class KerplappActivity extends Activity {
         } catch (IOException e1) {
             e1.printStackTrace();
         }
+
+        // the required NFC API was added in 4.0 aka Ice Cream Sandwich
+        if (Build.VERSION.SDK_INT < 14) {
+            return;
+        }
+        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        if (nfcAdapter == null)
+            return;
+        nfcAdapter.setNdefPushMessage(new NdefMessage(new NdefRecord[] {
+                NdefRecord.createUri(getSharingUri()),
+        }), this);
     }
 
     @SuppressWarnings("deprecation")
