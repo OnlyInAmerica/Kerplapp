@@ -49,12 +49,11 @@ import java.util.Locale;
 
 @SuppressLint("DefaultLocale")
 public class KerplappActivity extends Activity {
-    private static final String TAG = KerplappActivity.class.getCanonicalName();
+    private static final String TAG = "KerplappActivity";
     private ProgressDialog repoProgress;
 
     private ToggleButton repoSwitch;
     private WifiManager wifiManager;
-    private String wifiNetworkName = "";
     private int ipAddress = 0;
     private int port = 8888;
     private String ipAddressString = null;
@@ -183,6 +182,7 @@ public class KerplappActivity extends Activity {
         final KerplappRepo repo = appCtx.getRepo();
 
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        String ssid = wifiInfo.getSSID().replaceAll("^\"(.*)\"$", "$1");
         KerplappKeyStore keyStore = appCtx.getKeyStore();
 
         ipAddress = wifiInfo.getIpAddress();
@@ -191,29 +191,36 @@ public class KerplappActivity extends Activity {
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
         repo.setIpAddressString(ipAddressString);
 
-        fingerprint = keyStore.getFingerprint();
-        repoUriString = String.format(Locale.ENGLISH, "%s://%s%s:%d/fdroid/repo",
-                useHttps ? "https" : "http",
-                fingerprint != null ? fingerprint + "@" : "",
-                ipAddressString, port);
+        Uri.Builder b;
+        String host = String.format(Locale.ENGLISH, "%s:%d", ipAddressString, port);
+        if (useHttps)
+            b = Uri.parse("https://" + host).buildUpon();
+        else
+            b = Uri.parse("http://" + host).buildUpon();
+        b.path("/fdroid/repo");
+        b.appendQueryParameter("ssid", ssid);
+        b.appendQueryParameter("bssid", Uri.encode(wifiInfo.getBSSID()));
+        b.appendQueryParameter("fingerprint", keyStore.getFingerprint());
+        Uri repoUri = b.build();
+
+        repoUriString = repoUri.toString();
         repo.setUriString(repoUriString);
 
         // the fingerprint is not useful on the button label
-        String buttonLabel = repoUriString.replace(fingerprint + "@", "");
+        String buttonLabel = repoUriString.replaceAll("\\?.*$", "");
         repoSwitch.setText(buttonLabel);
         repoSwitch.setTextOn(buttonLabel);
         repoSwitch.setTextOff(buttonLabel);
         ImageView repoQrCodeImageView = (ImageView) findViewById(R.id.repoQrCode);
-        // F-Droid currently only understands fdroidrepo:// and fdroidrepos://
+        // fdroidrepo:// and fdroidrepos:// ensures it goes directly to F-Droid
         String fdroidrepoUriString = repoUriString.replaceAll("^http", "fdroidrepo");
         repo.writeIndexPage(fdroidrepoUriString);
         // set URL to UPPER for compact QR Code, FDroid will translate it back
         fdroidrepoUriString = fdroidrepoUriString.toUpperCase(Locale.ENGLISH);
         repoQrCodeImageView.setImageBitmap(generateQrCode(fdroidrepoUriString));
 
-        wifiNetworkName = wifiInfo.getSSID();
         TextView wifiNetworkNameTextView = (TextView) findViewById(R.id.wifiNetworkName);
-        wifiNetworkNameTextView.setText(wifiNetworkName);
+        wifiNetworkNameTextView.setText(ssid);
 
         TextView fingerprintTextView = (TextView) findViewById(R.id.fingerprint);
         if (fingerprint != null) {
