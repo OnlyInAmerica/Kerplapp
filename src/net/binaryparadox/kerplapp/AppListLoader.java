@@ -83,7 +83,7 @@ public class AppListLoader extends AsyncTaskLoader<List<AppEntry>> {
 
         final Context context = getContext();
         final KerplappApplication app = (KerplappApplication) context.getApplicationContext();
-        final File repoDir = app.getRepo().repoDir;
+        final File repoDir = app.getKerplappRepo().repoDir;
 
         // Create corresponding array of entries and load their labels
         List<AppEntry> entries = new ArrayList<AppEntry>(apps.size());

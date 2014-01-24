@@ -37,6 +37,7 @@ import com.google.zxing.encode.QRCodeEncoder;
 
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
+import org.fdroid.fdroid.data.Repo;
 import org.spongycastle.operator.OperatorCreationException;
 
 import java.io.FileNotFoundException;
@@ -52,13 +53,12 @@ public class KerplappActivity extends Activity {
     private static final String TAG = "KerplappActivity";
     private ProgressDialog repoProgress;
 
-    private ToggleButton repoSwitch;
     private WifiManager wifiManager;
+    private ToggleButton repoSwitch;
     private int ipAddress = 0;
     private int port = 8888;
     private String ipAddressString = null;
-    private String fingerprint = null;
-    private String repoUriString = null;
+    private Repo repo = new Repo();
 
     private int SET_IP_ADDRESS;
     private Thread webServerThread = null;
@@ -115,13 +115,13 @@ public class KerplappActivity extends Activity {
                 startActivityForResult(new Intent(this, AppSelectActivity.class), SET_IP_ADDRESS);
                 return true;
             case R.id.menu_send_to_fdroid:
-                if (repoUriString == null) {
+                if (repo.address == null) {
                     Toast.makeText(this, "The repo is not configured yet!", Toast.LENGTH_LONG)
                             .show();
                 } else {
                     // TODO check if F-Droid is actually installed instead of
                     // just crashing
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(repoUriString));
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(repo.address));
                     intent.setClassName("org.fdroid.fdroid", "org.fdroid.fdroid.ManageRepo");
                     startActivity(intent);
                 }
@@ -179,7 +179,7 @@ public class KerplappActivity extends Activity {
         final boolean useHttps = prefs.getBoolean("use_https", false);
 
         final KerplappApplication appCtx = (KerplappApplication) getApplication();
-        final KerplappRepo repo = appCtx.getRepo();
+        final KerplappRepo kerplappRepo = appCtx.getKerplappRepo();
 
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         String ssid = wifiInfo.getSSID().replaceAll("^\"(.*)\"$", "$1");
@@ -189,7 +189,7 @@ public class KerplappActivity extends Activity {
         ipAddressString = String.format(Locale.ENGLISH, "%d.%d.%d.%d",
                 (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
-        repo.setIpAddressString(ipAddressString);
+        kerplappRepo.setIpAddressString(ipAddressString);
 
         Uri.Builder b;
         String host = String.format(Locale.ENGLISH, "%s:%d", ipAddressString, port);
@@ -203,18 +203,18 @@ public class KerplappActivity extends Activity {
         b.appendQueryParameter("fingerprint", keyStore.getFingerprint());
         Uri repoUri = b.build();
 
-        repoUriString = repoUri.toString();
-        repo.setUriString(repoUriString);
+        repo.address = repoUri.toString();
+        kerplappRepo.setUriString(repo.address);
 
         // the fingerprint is not useful on the button label
-        String buttonLabel = repoUriString.replaceAll("\\?.*$", "");
+        String buttonLabel = repo.address.replaceAll("\\?.*$", "");
         repoSwitch.setText(buttonLabel);
         repoSwitch.setTextOn(buttonLabel);
         repoSwitch.setTextOff(buttonLabel);
         ImageView repoQrCodeImageView = (ImageView) findViewById(R.id.repoQrCode);
         // fdroidrepo:// and fdroidrepos:// ensures it goes directly to F-Droid
-        String fdroidrepoUriString = repoUriString.replaceAll("^http", "fdroidrepo");
-        repo.writeIndexPage(fdroidrepoUriString);
+        String fdroidrepoUriString = repo.address.replaceAll("^http", "fdroidrepo");
+        kerplappRepo.writeIndexPage(fdroidrepoUriString);
         // set URL to UPPER for compact QR Code, FDroid will translate it back
         fdroidrepoUriString = fdroidrepoUriString.toUpperCase(Locale.ENGLISH);
         repoQrCodeImageView.setImageBitmap(generateQrCode(fdroidrepoUriString));
@@ -223,9 +223,9 @@ public class KerplappActivity extends Activity {
         wifiNetworkNameTextView.setText(ssid);
 
         TextView fingerprintTextView = (TextView) findViewById(R.id.fingerprint);
-        if (fingerprint != null) {
+        if (repo.fingerprint != null) {
             fingerprintTextView.setVisibility(View.VISIBLE);
-            fingerprintTextView.setText(fingerprint);
+            fingerprintTextView.setText(repo.fingerprint);
         } else {
             fingerprintTextView.setVisibility(View.GONE);
         }

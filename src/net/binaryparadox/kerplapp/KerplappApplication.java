@@ -60,7 +60,7 @@ public class KerplappApplication extends Application {
         }
     }
 
-    public KerplappRepo getRepo() {
+    public KerplappRepo getKerplappRepo() {
         return repo;
     }
 

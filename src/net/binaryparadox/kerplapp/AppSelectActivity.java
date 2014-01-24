@@ -71,7 +71,7 @@ public class AppSelectActivity extends FragmentActivity {
 
         @Override
         protected Void doInBackground(Void... params) {
-            KerplappRepo repo = ((KerplappApplication) getApplication()).getRepo();
+            KerplappRepo repo = ((KerplappApplication) getApplication()).getKerplappRepo();
             try {
                 publishProgress(getString(R.string.deleting_repo));
                 repo.deleteRepo();
