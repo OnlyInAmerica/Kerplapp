@@ -9,6 +9,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetManager;
+import android.net.Uri;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -122,7 +123,7 @@ public class KerplappRepo {
                 throw new IllegalStateException("Unable to create empty index.xml file");
     }
 
-    public void writeIndexPage(String repoURL)
+    public void writeIndexPage(Uri repoUri)
     {
         String fdroidPkg = "org.fdroid.fdroid";
         ApplicationInfo appInfo;
@@ -149,7 +150,7 @@ public class KerplappRepo {
 
             while (in.ready()) { //
                 String line = in.readLine();
-                line = line.replaceAll("\\{\\{REPO_URL\\}\\}", repoURL);
+                line = line.replaceAll("\\{\\{REPO_URL\\}\\}", repoUri.toString());
                 line = line.replaceAll("\\{\\{CLIENT_URL\\}\\}", fdroidClientURL);
                 out.write(line);
             }

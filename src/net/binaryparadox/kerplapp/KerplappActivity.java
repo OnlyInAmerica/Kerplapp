@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
@@ -121,7 +122,7 @@ public class KerplappActivity extends Activity {
                 } else {
                     // TODO check if F-Droid is actually installed instead of
                     // just crashing
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(repo.address));
+                    Intent intent = new Intent(Intent.ACTION_VIEW, getSharingUri());
                     intent.setClassName("org.fdroid.fdroid", "org.fdroid.fdroid.ManageRepo");
                     startActivity(intent);
                 }
@@ -191,20 +192,14 @@ public class KerplappActivity extends Activity {
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
         kerplappRepo.setIpAddressString(ipAddressString);
 
-        Uri.Builder b;
-        String host = String.format(Locale.ENGLISH, "%s:%d", ipAddressString, port);
+        String scheme;
         if (useHttps)
-            b = Uri.parse("https://" + host).buildUpon();
+            scheme = "https";
         else
-            b = Uri.parse("http://" + host).buildUpon();
-        b.path("/fdroid/repo");
-        b.appendQueryParameter("ssid", ssid);
-        b.appendQueryParameter("bssid", Uri.encode(wifiInfo.getBSSID()));
-        b.appendQueryParameter("fingerprint", keyStore.getFingerprint());
-        Uri repoUri = b.build();
-
-        repo.address = repoUri.toString();
-        kerplappRepo.setUriString(repo.address);
+            scheme = "http";
+        repo.address = String.format(Locale.ENGLISH, "%s://%s:%d/fdroid/repo",
+                scheme, ipAddressString, port);
+        repo.fingerprint = keyStore.getFingerprint();
 
         // the fingerprint is not useful on the button label
         String buttonLabel = repo.address.replaceAll("\\?.*$", "");
@@ -213,11 +208,12 @@ public class KerplappActivity extends Activity {
         repoSwitch.setTextOff(buttonLabel);
         ImageView repoQrCodeImageView = (ImageView) findViewById(R.id.repoQrCode);
         // fdroidrepo:// and fdroidrepos:// ensures it goes directly to F-Droid
-        String fdroidrepoUriString = repo.address.replaceAll("^http", "fdroidrepo");
-        kerplappRepo.writeIndexPage(fdroidrepoUriString);
+        Uri fdroidrepoUri = getSharingUri();
+        kerplappRepo.setUriString(repo.address);
+        kerplappRepo.writeIndexPage(fdroidrepoUri);
         // set URL to UPPER for compact QR Code, FDroid will translate it back
-        fdroidrepoUriString = fdroidrepoUriString.toUpperCase(Locale.ENGLISH);
-        repoQrCodeImageView.setImageBitmap(generateQrCode(fdroidrepoUriString));
+        Bitmap qrBitmap = generateQrCode(fdroidrepoUri.toString().toUpperCase(Locale.ENGLISH));
+        repoQrCodeImageView.setImageBitmap(qrBitmap);
 
         TextView wifiNetworkNameTextView = (TextView) findViewById(R.id.wifiNetworkName);
         wifiNetworkNameTextView.setText(ssid);
@@ -373,6 +369,22 @@ public class KerplappActivity extends Activity {
         Message msg = handler.obtainMessage();
         msg.obj = handler.getLooper().getThread().getName() + " says stop";
         handler.sendMessage(msg);
+    }
+
+    // this is from F-Droid RepoDetailsActivity
+    protected Uri getSharingUri() {
+        Uri uri = Uri.parse(repo.address.replaceFirst("http", "fdroidrepo"));
+        Uri.Builder b = uri.buildUpon();
+        b.appendQueryParameter("fingerprint", repo.fingerprint);
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        String ssid = wifiInfo.getSSID().replaceAll("^\"(.*)\"$", "$1");
+        String bssid = wifiInfo.getBSSID();
+        if (!TextUtils.isEmpty(bssid)) {
+            b.appendQueryParameter("bssid", Uri.encode(bssid));
+            if (!TextUtils.isEmpty(ssid))
+                b.appendQueryParameter("ssid", Uri.encode(ssid));
+        }
+        return b.build();
     }
 
 }
