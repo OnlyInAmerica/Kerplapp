@@ -7,6 +7,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.net.Uri;
@@ -350,8 +351,18 @@ public class KerplappActivity extends Activity {
         webServerThread.start();
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        // ignore orientation/keyboard change
+        super.onConfigurationChanged(newConfig);
+    }
+
     private void stopWebServer() {
         Log.i(TAG, "stop the webserver");
+        if (handler == null) {
+            Log.i(TAG, "null handler in stopWebServer");
+            return;
+        }
         Message msg = handler.obtainMessage();
         msg.obj = handler.getLooper().getThread().getName() + " says stop";
         handler.sendMessage(msg);
