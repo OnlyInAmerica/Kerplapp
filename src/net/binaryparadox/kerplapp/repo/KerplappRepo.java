@@ -9,6 +9,12 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.graphics.Bitmap.Config;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.preference.PreferenceManager;
@@ -76,6 +82,7 @@ public class KerplappRepo {
     public File webRoot = null;
     public File fdroidDir = null;
     public File repoDir = null;
+    public File iconsDir = null;
 
     public KerplappRepo(Context c) {
         webRoot = c.getFilesDir();
@@ -113,6 +120,11 @@ public class KerplappRepo {
         if (!repoDir.exists())
             if (!repoDir.mkdir())
                 throw new IllegalStateException("Unable to create empty repo: " + repoDir);
+
+        iconsDir = new File(repoDir, "icons");
+        if (!iconsDir.exists())
+            if (!iconsDir.mkdir())
+                throw new IllegalStateException("Unable to create icons folder: " + iconsDir);
 
         xmlIndex = new File(repoDir, "index.xml");
         xmlIndexJar = new File(repoDir, "index.jar");
@@ -302,10 +314,11 @@ public class KerplappRepo {
         App app = new App();
         app.name = (String) appInfo.loadLabel(pm);
         app.summary = (String) appInfo.loadDescription(pm);
-        app.icon = appInfo.loadIcon(pm).toString();
+        app.icon = getIconFile(packageName, packageInfo.versionCode).getName();
         app.id = appInfo.packageName;
         app.added = new Date(packageInfo.firstInstallTime);
         app.lastUpdated = new Date(packageInfo.lastUpdateTime);
+        app.appInfo = appInfo;
         app.apks = new ArrayList<Apk>();
 
         // TODO: use pm.getInstallerPackageName(packageName) for something
@@ -433,9 +446,42 @@ public class KerplappRepo {
 
     public void copyIconsToRepo() {
         for (App app : apps.values()) {
-            // TODO get the icon out of the APK and copy it to the repo dir
-            // appInfo.loadIcon(pm).toString(); // copy drawable to file?
+            if (app.apks.size() > 0) {
+                Apk apk = app.apks.get(0);
+                copyIconToRepo(app.appInfo.loadIcon(pm), app.id, apk.vercode);
+            }
         }
+    }
+
+    /**
+     * Extracts the icon from an APK and writes it to the repo as a PNG
+     *
+     * @return path to the PNG file
+     */
+    public void copyIconToRepo(Drawable drawable, String packageName, int versionCode) {
+        Bitmap bitmap;
+        if (drawable instanceof BitmapDrawable) {
+            bitmap = ((BitmapDrawable) drawable).getBitmap();
+        } else {
+            bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                    drawable.getIntrinsicHeight(), Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+            drawable.draw(canvas);
+        }
+        File png = getIconFile(packageName, versionCode);
+        OutputStream out;
+        try {
+            out = new BufferedOutputStream(new FileOutputStream(png));
+            bitmap.compress(CompressFormat.PNG, 100, out);
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private File getIconFile(String packageName, int versionCode) {
+        return new File(iconsDir, packageName + "_" + versionCode + ".png");
     }
 
     public void writeIndexXML() throws Exception {

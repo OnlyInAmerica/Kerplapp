@@ -1,6 +1,8 @@
 
 package net.binaryparadox.kerplapp.repo;
 
+import android.content.pm.ApplicationInfo;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -15,6 +17,7 @@ public class App implements Comparable<App> {
         // requirements = null;
         added = null;
         lastUpdated = null;
+        appInfo = null;
         apks = new ArrayList<Apk>();
     }
 
@@ -30,6 +33,7 @@ public class App implements Comparable<App> {
 
     public Date added;
     public Date lastUpdated;
+    public ApplicationInfo appInfo;
     public List<Apk> apks;
 
     @Override
