@@ -452,8 +452,10 @@ public class KerplappRepo {
 
         Element repo = doc.createElement("repo");
         repo.setAttribute("icon", "blah.png");
-        repo.setAttribute("name", "Kerplapp Repo");
+        repo.setAttribute("name", "Kerplapp on " + ipAddressString);
         repo.setAttribute("url", uriString);
+        long timestamp = System.currentTimeMillis() / 1000L;
+        repo.setAttribute("timestamp", String.valueOf(timestamp));
         repo.setAttribute("maxage", String.valueOf(repoMaxAge));
         rootElement.appendChild(repo);
 
