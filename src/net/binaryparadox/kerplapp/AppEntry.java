@@ -27,6 +27,7 @@ import android.graphics.drawable.Drawable;
 import java.io.File;
 
 public class AppEntry {
+    public static final String TAG = "AppEntry";
 
     private final AppListLoader loader;
     private final ApplicationInfo info;

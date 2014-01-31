@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -16,7 +15,7 @@ import android.widget.Toast;
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
 public class AppSelectActivity extends FragmentActivity {
-    private final String TAG = AppSelectActivity.class.getName();
+    private final String TAG = "AppSelectActivity";
     private AppListFragment appListFragment = null;
 
     @Override
@@ -88,7 +87,7 @@ public class AppSelectActivity extends FragmentActivity {
                 publishProgress(getString(R.string.copying_icons));
                 repo.copyIconsToRepo();
             } catch (Exception e) {
-                Log.e(TAG, e.toString());
+                e.printStackTrace();
             }
             return null;
         }

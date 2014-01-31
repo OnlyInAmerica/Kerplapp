@@ -17,7 +17,7 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
 public class KerplappApplication extends Application {
-    private static final String TAG = KerplappApplication.class.getName();
+    private static final String TAG = "KerplappApplication";
     private static final String keyStoreDirName  = "keystore";
     private static final String keyStoreFileName = "kerplapp.bks";
 
