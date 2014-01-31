@@ -55,10 +55,10 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 public class KerplappRepo {
-    private static final String TAG = KerplappRepo.class.getCanonicalName();
+    private static final String TAG = "KerplappRepo";
 
-    // For ref, official F-droid repo presently uses a maxage attribute of '14' days.
-    private static final int DEFAULT_REPO_MAX_AGE_DAYS = 14;
+    // For ref, official F-droid repo presently uses a maxage of 14 days
+    private static final String DEFAULT_REPO_MAX_AGE_DAYS = "14";
 
     private final PackageManager pm;
     private final KerplappApplication appCtx;
@@ -442,7 +442,9 @@ public class KerplappRepo {
         Element rootElement = doc.createElement("fdroid");
         doc.appendChild(rootElement);
 
-        int repoMaxAge = prefs.getInt("max_repo_age_days", DEFAULT_REPO_MAX_AGE_DAYS);
+        // max age is an EditTextPreference, which is always a String
+        int repoMaxAge = Float.valueOf(prefs.getString("max_repo_age_days",
+                DEFAULT_REPO_MAX_AGE_DAYS)).intValue();
 
         Element repo = doc.createElement("repo");
         repo.setAttribute("icon", "blah.png");
