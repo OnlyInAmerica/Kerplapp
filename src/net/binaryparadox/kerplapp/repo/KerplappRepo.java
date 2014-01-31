@@ -343,8 +343,10 @@ public class KerplappRepo {
             JarFile apkJar = new JarFile(apkFile);
             JarEntry aSignedEntry = (JarEntry) apkJar.getEntry("AndroidManifest.xml");
 
-            if (aSignedEntry == null)
+            if (aSignedEntry == null) {
+                apkJar.close();
                 return null;
+            }
 
             InputStream tmpIn = apkJar.getInputStream(aSignedEntry);
             byte[] buff = new byte[2048];
@@ -356,8 +358,10 @@ public class KerplappRepo {
             tmpIn.close();
 
             if (aSignedEntry.getCertificates() == null
-                    || aSignedEntry.getCertificates().length == 0)
+                    || aSignedEntry.getCertificates().length == 0) {
+                apkJar.close();
                 return null;
+            }
 
             Certificate signer = aSignedEntry.getCertificates()[0];
             rawCertBytes = signer.getEncoded();
