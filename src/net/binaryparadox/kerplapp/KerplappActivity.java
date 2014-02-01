@@ -66,7 +66,8 @@ public class KerplappActivity extends Activity {
     private String ipAddressString = null;
     private Repo repo = new Repo();
 
-    private int SET_IP_ADDRESS;
+    private int SET_IP_ADDRESS = 0x7345;
+    private int SEND_TEST_REPO = 0x7346;
     private Thread webServerThread = null;
     private Handler handler = null;
 
@@ -129,7 +130,7 @@ public class KerplappActivity extends Activity {
                     // just crashing
                     Intent intent = new Intent(Intent.ACTION_VIEW, getSharingUri());
                     intent.setClassName("org.fdroid.fdroid", "org.fdroid.fdroid.ManageRepo");
-                    startActivity(intent);
+                    startActivityForResult(intent, SEND_TEST_REPO);
                 }
                 return true;
             case R.id.menu_settings:
@@ -143,6 +144,10 @@ public class KerplappActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == SET_IP_ADDRESS && resultCode == Activity.RESULT_OK) {
             setIpAddressFromWifi();
+        } else if (requestCode == SEND_TEST_REPO) {
+            Intent intent = new Intent();
+            intent.setClassName("org.fdroid.fdroid", "org.fdroid.fdroid.ManageRepo");
+            startActivity(intent);
         }
     }
 
