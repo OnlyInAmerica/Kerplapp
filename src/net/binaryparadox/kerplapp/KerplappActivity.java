@@ -113,30 +113,7 @@ public class KerplappActivity extends Activity {
                     enableWifi();
                 }
             });
-            
-            if(nsdHelper != null)
-            {
-                nsdHelper.tearDown();
-            }
         }
-    }
-    
-    @Override
-    public void onPause() {
-        if (nsdHelper != null)
-        {
-            nsdHelper.tearDown();
-        }
-        super.onPause();
-    }
-    
-    @Override
-    public void onDestroy() {
-        if(nsdHelper != null)
-        {
-            nsdHelper.tearDown();
-        }
-        super.onDestroy();
     }
 
     @Override
@@ -386,6 +363,12 @@ public class KerplappActivity extends Activity {
                     kerplappSrv.enableHTTPS(keyStore);
                 }
 
+                if(nsdHelper != null)
+                {
+                    Log.i(TAG, "Registering Kerplapp service with NSD");
+                    nsdHelper.registerService(port);
+                }
+
                 Looper.prepare(); // must be run before creating a Handler
                 handler = new Handler() {
                     @Override
@@ -393,6 +376,11 @@ public class KerplappActivity extends Activity {
                         // the only message this Thread responds to is STOP!
                         Log.i(TAG, "we've been asked to stop the webserver: " + msg.obj);
                         kerplappSrv.stop();
+
+                        if (nsdHelper != null)
+                        {
+                            nsdHelper.tearDown();
+                        }
                     }
                 };
                 try {
@@ -405,14 +393,6 @@ public class KerplappActivity extends Activity {
         };
         webServerThread = new Thread(webServer);
         webServerThread.start();
-        
-        if(nsdHelper != null && repoSwitch.isChecked())
-        {
-            Log.i(TAG, "Registering Kerplapp service with NSD");
-            nsdHelper.registerService(port);
-        }
-
-        nsdHelper = nsdHelper !=  null ? nsdHelper : nsdHelper;
     }
 
     @Override
@@ -430,6 +410,8 @@ public class KerplappActivity extends Activity {
         Message msg = handler.obtainMessage();
         msg.obj = handler.getLooper().getThread().getName() + " says stop";
         handler.sendMessage(msg);
+
+        super.onPause();
     }
 
     // this is from F-Droid RepoDetailsActivity
