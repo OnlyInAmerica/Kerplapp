@@ -1,3 +1,0 @@
-[submodule "external/nanohttpd"]
-	path = external/nanohttpd
-	url = https://github.com/guardianproject/nanohttpd
