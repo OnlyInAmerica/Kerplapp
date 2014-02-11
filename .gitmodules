@@ -1,0 +1,3 @@
+[submodule "external/nanohttpd"]
+	path = external/nanohttpd
+	url = git@github.com:binaryparadox/nanohttpd.git
