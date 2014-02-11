@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -16,7 +15,7 @@ import android.widget.Toast;
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
 public class AppSelectActivity extends FragmentActivity {
-    private final String TAG = AppSelectActivity.class.getName();
+    private final String TAG = "AppSelectActivity";
     private AppListFragment appListFragment = null;
 
     @Override
@@ -71,7 +70,7 @@ public class AppSelectActivity extends FragmentActivity {
 
         @Override
         protected Void doInBackground(Void... params) {
-            KerplappRepo repo = ((KerplappApplication) getApplication()).getRepo();
+            final KerplappRepo repo = ((KerplappApplication) getApplication()).getKerplappRepo();
             try {
                 publishProgress(getString(R.string.deleting_repo));
                 repo.deleteRepo();
@@ -86,9 +85,17 @@ public class AppSelectActivity extends FragmentActivity {
                 publishProgress(getString(R.string.linking_apks));
                 repo.copyApksToRepo();
                 publishProgress(getString(R.string.copying_icons));
-                repo.copyIconsToRepo();
+                // run the icon copy without progress, its not a blocker
+                new AsyncTask<Void, Void, Void>() {
+
+                    @Override
+                    protected Void doInBackground(Void... params) {
+                        repo.copyIconsToRepo();
+                        return null;
+                    }
+                }.execute();
             } catch (Exception e) {
-                Log.e(TAG, e.toString());
+                e.printStackTrace();
             }
             return null;
         }

@@ -2,22 +2,29 @@
 package net.binaryparadox.kerplapp;
 
 import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.nfc.NdefMessage;
+import android.nfc.NdefRecord;
+import android.nfc.NfcAdapter;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.preference.PreferenceManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Display;
 import android.view.Menu;
@@ -38,6 +45,7 @@ import net.binaryparadox.kerplapp.network.KerplappHTTPD;
 import net.binaryparadox.kerplapp.network.NsdHelper;
 import net.binaryparadox.kerplapp.repo.KerplappRepo;
 
+import org.fdroid.fdroid.data.Repo;
 import org.spongycastle.operator.OperatorCreationException;
 
 import java.io.FileNotFoundException;
@@ -50,19 +58,18 @@ import java.util.Locale;
 
 @SuppressLint("DefaultLocale")
 public class KerplappActivity extends Activity {
-    private static final String TAG = KerplappActivity.class.getCanonicalName();
+    private static final String TAG = "KerplappActivity";
     private ProgressDialog repoProgress;
 
-    private ToggleButton repoSwitch;
     private WifiManager wifiManager;
-    private String wifiNetworkName = "";
+    private ToggleButton repoSwitch;
     private int ipAddress = 0;
     private int port = 8888;
     private String ipAddressString = null;
-    private String fingerprint = null;
-    private String repoUriString = null;
+    private Repo repo = new Repo();
 
-    private int SET_IP_ADDRESS;
+    private int SET_IP_ADDRESS = 0x7345;
+    private int SEND_TEST_REPO = 0x7346;
     private Thread webServerThread = null;
     private Handler handler = null;
     
@@ -146,15 +153,15 @@ public class KerplappActivity extends Activity {
                 startActivityForResult(new Intent(this, AppSelectActivity.class), SET_IP_ADDRESS);
                 return true;
             case R.id.menu_send_to_fdroid:
-                if (repoUriString == null) {
+                if (repo.address == null) {
                     Toast.makeText(this, "The repo is not configured yet!", Toast.LENGTH_LONG)
                             .show();
                 } else {
                     // TODO check if F-Droid is actually installed instead of
                     // just crashing
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(repoUriString));
+                    Intent intent = new Intent(Intent.ACTION_VIEW, getSharingUri());
                     intent.setClassName("org.fdroid.fdroid", "org.fdroid.fdroid.ManageRepo");
-                    startActivity(intent);
+                    startActivityForResult(intent, SEND_TEST_REPO);
                 }
                 return true;
             case R.id.menu_settings:
@@ -168,6 +175,10 @@ public class KerplappActivity extends Activity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == SET_IP_ADDRESS && resultCode == Activity.RESULT_OK) {
             setIpAddressFromWifi();
+        } else if (requestCode == SEND_TEST_REPO) {
+            Intent intent = new Intent();
+            intent.setClassName("org.fdroid.fdroid", "org.fdroid.fdroid.ManageRepo");
+            startActivity(intent);
         }
     }
 
@@ -205,50 +216,54 @@ public class KerplappActivity extends Activity {
         });
     }
 
+    @TargetApi(14)
     private void setIpAddressFromWifi() {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final boolean useHttps = prefs.getBoolean("use_https", false);
 
         final KerplappApplication appCtx = (KerplappApplication) getApplication();
-        final KerplappRepo repo = appCtx.getRepo();
+        final KerplappRepo kerplappRepo = appCtx.getKerplappRepo();
 
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        String ssid = wifiInfo.getSSID().replaceAll("^\"(.*)\"$", "$1");
         KerplappKeyStore keyStore = appCtx.getKeyStore();
 
         ipAddress = wifiInfo.getIpAddress();
         ipAddressString = String.format(Locale.ENGLISH, "%d.%d.%d.%d",
                 (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
                 (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
-        repo.setIpAddressString(ipAddressString);
+        kerplappRepo.setIpAddressString(ipAddressString);
 
-        fingerprint = keyStore.getFingerprint();
-        repoUriString = String.format(Locale.ENGLISH, "%s://%s%s:%d/fdroid/repo",
-                useHttps ? "https" : "http",
-                fingerprint != null ? fingerprint + "@" : "",
-                ipAddressString, port);
-        repo.setUriString(repoUriString);
+        String scheme;
+        if (useHttps)
+            scheme = "https";
+        else
+            scheme = "http";
+        repo.address = String.format(Locale.ENGLISH, "%s://%s:%d/fdroid/repo",
+                scheme, ipAddressString, port);
+        repo.fingerprint = keyStore.getFingerprint();
 
         // the fingerprint is not useful on the button label
-        String buttonLabel = repoUriString.replace(fingerprint + "@", "");
+        String buttonLabel = repo.address.replaceAll("\\?.*$", "");
         repoSwitch.setText(buttonLabel);
         repoSwitch.setTextOn(buttonLabel);
         repoSwitch.setTextOff(buttonLabel);
         ImageView repoQrCodeImageView = (ImageView) findViewById(R.id.repoQrCode);
-        // F-Droid currently only understands fdroidrepo:// and fdroidrepos://
-        String fdroidrepoUriString = repoUriString.replaceAll("^http", "fdroidrepo");
-        repo.writeIndexPage(fdroidrepoUriString);
+        // fdroidrepo:// and fdroidrepos:// ensures it goes directly to F-Droid
+        Uri fdroidrepoUri = getSharingUri();
+        kerplappRepo.setUriString(repo.address);
+        kerplappRepo.writeIndexPage(fdroidrepoUri);
         // set URL to UPPER for compact QR Code, FDroid will translate it back
-        fdroidrepoUriString = fdroidrepoUriString.toUpperCase(Locale.ENGLISH);
-        repoQrCodeImageView.setImageBitmap(generateQrCode(fdroidrepoUriString));
+        Bitmap qrBitmap = generateQrCode(fdroidrepoUri.toString().toUpperCase(Locale.ENGLISH));
+        repoQrCodeImageView.setImageBitmap(qrBitmap);
 
-        wifiNetworkName = wifiInfo.getSSID();
         TextView wifiNetworkNameTextView = (TextView) findViewById(R.id.wifiNetworkName);
-        wifiNetworkNameTextView.setText(wifiNetworkName);
+        wifiNetworkNameTextView.setText(ssid);
 
         TextView fingerprintTextView = (TextView) findViewById(R.id.fingerprint);
-        if (fingerprint != null) {
+        if (repo.fingerprint != null) {
             fingerprintTextView.setVisibility(View.VISIBLE);
-            fingerprintTextView.setText(fingerprint);
+            fingerprintTextView.setText(repo.fingerprint);
         } else {
             fingerprintTextView.setVisibility(View.GONE);
         }
@@ -274,6 +289,17 @@ public class KerplappActivity extends Activity {
         } catch (IOException e1) {
             e1.printStackTrace();
         }
+
+        // the required NFC API was added in 4.0 aka Ice Cream Sandwich
+        if (Build.VERSION.SDK_INT < 14) {
+            return;
+        }
+        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        if (nfcAdapter == null)
+            return;
+        nfcAdapter.setNdefPushMessage(new NdefMessage(new NdefRecord[] {
+                NdefRecord.createUri(getSharingUri()),
+        }), this);
     }
 
     @SuppressWarnings("deprecation")
@@ -389,11 +415,37 @@ public class KerplappActivity extends Activity {
         nsdHelper = nsdHelper !=  null ? nsdHelper : nsdHelper;
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        // ignore orientation/keyboard change
+        super.onConfigurationChanged(newConfig);
+    }
+
     private void stopWebServer() {
         Log.i(TAG, "stop the webserver");
+        if (handler == null) {
+            Log.i(TAG, "null handler in stopWebServer");
+            return;
+        }
         Message msg = handler.obtainMessage();
         msg.obj = handler.getLooper().getThread().getName() + " says stop";
         handler.sendMessage(msg);
+    }
+
+    // this is from F-Droid RepoDetailsActivity
+    protected Uri getSharingUri() {
+        Uri uri = Uri.parse(repo.address.replaceFirst("http", "fdroidrepo"));
+        Uri.Builder b = uri.buildUpon();
+        b.appendQueryParameter("fingerprint", repo.fingerprint);
+        WifiInfo wifiInfo = wifiManager.getConnectionInfo();
+        String ssid = wifiInfo.getSSID().replaceAll("^\"(.*)\"$", "$1");
+        String bssid = wifiInfo.getBSSID();
+        if (!TextUtils.isEmpty(bssid)) {
+            b.appendQueryParameter("bssid", Uri.encode(bssid));
+            if (!TextUtils.isEmpty(ssid))
+                b.appendQueryParameter("ssid", Uri.encode(ssid));
+        }
+        return b.build();
     }
 
 }

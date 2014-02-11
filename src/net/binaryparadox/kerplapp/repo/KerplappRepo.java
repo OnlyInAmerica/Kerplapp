@@ -9,6 +9,13 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.CompressFormat;
+import android.graphics.Bitmap.Config;
+import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -54,10 +61,10 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 public class KerplappRepo {
-    private static final String TAG = KerplappRepo.class.getCanonicalName();
+    private static final String TAG = "KerplappRepo";
 
-    // For ref, official F-droid repo presently uses a maxage attribute of '14' days.
-    private static final int DEFAULT_REPO_MAX_AGE_DAYS = 14;
+    // For ref, official F-droid repo presently uses a maxage of 14 days
+    private static final String DEFAULT_REPO_MAX_AGE_DAYS = "14";
 
     private final PackageManager pm;
     private final KerplappApplication appCtx;
@@ -75,6 +82,7 @@ public class KerplappRepo {
     public File webRoot = null;
     public File fdroidDir = null;
     public File repoDir = null;
+    public File iconsDir = null;
 
     public KerplappRepo(Context c) {
         webRoot = c.getFilesDir();
@@ -113,6 +121,11 @@ public class KerplappRepo {
             if (!repoDir.mkdir())
                 throw new IllegalStateException("Unable to create empty repo: " + repoDir);
 
+        iconsDir = new File(repoDir, "icons");
+        if (!iconsDir.exists())
+            if (!iconsDir.mkdir())
+                throw new IllegalStateException("Unable to create icons folder: " + iconsDir);
+
         xmlIndex = new File(repoDir, "index.xml");
         xmlIndexJar = new File(repoDir, "index.jar");
         xmlIndexJarUnsigned = new File(repoDir, "index.unsigned.jar");
@@ -122,7 +135,7 @@ public class KerplappRepo {
                 throw new IllegalStateException("Unable to create empty index.xml file");
     }
 
-    public void writeIndexPage(String repoURL)
+    public void writeIndexPage(Uri repoUri)
     {
         String fdroidPkg = "org.fdroid.fdroid";
         ApplicationInfo appInfo;
@@ -149,7 +162,7 @@ public class KerplappRepo {
 
             while (in.ready()) { //
                 String line = in.readLine();
-                line = line.replaceAll("\\{\\{REPO_URL\\}\\}", repoURL);
+                line = line.replaceAll("\\{\\{REPO_URL\\}\\}", repoUri.toString());
                 line = line.replaceAll("\\{\\{CLIENT_URL\\}\\}", fdroidClientURL);
                 out.write(line);
             }
@@ -301,10 +314,11 @@ public class KerplappRepo {
         App app = new App();
         app.name = (String) appInfo.loadLabel(pm);
         app.summary = (String) appInfo.loadDescription(pm);
-        app.icon = appInfo.loadIcon(pm).toString();
+        app.icon = getIconFile(packageName, packageInfo.versionCode).getName();
         app.id = appInfo.packageName;
         app.added = new Date(packageInfo.firstInstallTime);
         app.lastUpdated = new Date(packageInfo.lastUpdateTime);
+        app.appInfo = appInfo;
         app.apks = new ArrayList<Apk>();
 
         // TODO: use pm.getInstallerPackageName(packageName) for something
@@ -342,8 +356,10 @@ public class KerplappRepo {
             JarFile apkJar = new JarFile(apkFile);
             JarEntry aSignedEntry = (JarEntry) apkJar.getEntry("AndroidManifest.xml");
 
-            if (aSignedEntry == null)
+            if (aSignedEntry == null) {
+                apkJar.close();
                 return null;
+            }
 
             InputStream tmpIn = apkJar.getInputStream(aSignedEntry);
             byte[] buff = new byte[2048];
@@ -355,8 +371,10 @@ public class KerplappRepo {
             tmpIn.close();
 
             if (aSignedEntry.getCertificates() == null
-                    || aSignedEntry.getCertificates().length == 0)
+                    || aSignedEntry.getCertificates().length == 0) {
+                apkJar.close();
                 return null;
+            }
 
             Certificate signer = aSignedEntry.getCertificates()[0];
             rawCertBytes = signer.getEncoded();
@@ -428,9 +446,42 @@ public class KerplappRepo {
 
     public void copyIconsToRepo() {
         for (App app : apps.values()) {
-            // TODO get the icon out of the APK and copy it to the repo dir
-            // appInfo.loadIcon(pm).toString(); // copy drawable to file?
+            if (app.apks.size() > 0) {
+                Apk apk = app.apks.get(0);
+                copyIconToRepo(app.appInfo.loadIcon(pm), app.id, apk.vercode);
+            }
         }
+    }
+
+    /**
+     * Extracts the icon from an APK and writes it to the repo as a PNG
+     *
+     * @return path to the PNG file
+     */
+    public void copyIconToRepo(Drawable drawable, String packageName, int versionCode) {
+        Bitmap bitmap;
+        if (drawable instanceof BitmapDrawable) {
+            bitmap = ((BitmapDrawable) drawable).getBitmap();
+        } else {
+            bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                    drawable.getIntrinsicHeight(), Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
+            drawable.draw(canvas);
+        }
+        File png = getIconFile(packageName, versionCode);
+        OutputStream out;
+        try {
+            out = new BufferedOutputStream(new FileOutputStream(png));
+            bitmap.compress(CompressFormat.PNG, 100, out);
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private File getIconFile(String packageName, int versionCode) {
+        return new File(iconsDir, packageName + "_" + versionCode + ".png");
     }
 
     public void writeIndexXML() throws Exception {
@@ -441,12 +492,16 @@ public class KerplappRepo {
         Element rootElement = doc.createElement("fdroid");
         doc.appendChild(rootElement);
 
-        int repoMaxAge = prefs.getInt("max_repo_age_days", DEFAULT_REPO_MAX_AGE_DAYS);
+        // max age is an EditTextPreference, which is always a String
+        int repoMaxAge = Float.valueOf(prefs.getString("max_repo_age_days",
+                DEFAULT_REPO_MAX_AGE_DAYS)).intValue();
 
         Element repo = doc.createElement("repo");
         repo.setAttribute("icon", "blah.png");
-        repo.setAttribute("name", "Kerplapp Repo");
+        repo.setAttribute("name", "Kerplapp on " + ipAddressString);
         repo.setAttribute("url", uriString);
+        long timestamp = System.currentTimeMillis() / 1000L;
+        repo.setAttribute("timestamp", String.valueOf(timestamp));
         repo.setAttribute("maxage", String.valueOf(repoMaxAge));
         rootElement.appendChild(repo);
 

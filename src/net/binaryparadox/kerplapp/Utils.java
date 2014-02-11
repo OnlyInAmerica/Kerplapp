@@ -16,7 +16,7 @@ import java.security.NoSuchAlgorithmException;
  * capable of creating a UAppID returned as a string literal.
  */
 public class Utils {
-    private static final String TAG = Utils.class.getCanonicalName();
+    private static final String TAG = "Utils";
 
     public static String hashBytes(byte[] input, String algo) {
         try {

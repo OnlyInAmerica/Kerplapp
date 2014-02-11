@@ -83,7 +83,7 @@ public class AppListLoader extends AsyncTaskLoader<List<AppEntry>> {
 
         final Context context = getContext();
         final KerplappApplication app = (KerplappApplication) context.getApplicationContext();
-        final File repoDir = app.getRepo().repoDir;
+        final File repoDir = app.getKerplappRepo().repoDir;
 
         // Create corresponding array of entries and load their labels
         List<AppEntry> entries = new ArrayList<AppEntry>(apps.size());
@@ -91,7 +91,7 @@ public class AppListLoader extends AsyncTaskLoader<List<AppEntry>> {
             AppEntry entry = new AppEntry(this, applicationInfo);
             entry.loadLabel(context);
             entries.add(entry);
-            
+
             // Need to load the package info to get the app version code.
             // We can use the repo dir, the package name and the version code to
             // determine if the app is already in the repo to preselect it.
@@ -99,12 +99,13 @@ public class AppListLoader extends AsyncTaskLoader<List<AppEntry>> {
             try {
             	packageInfo = pm.getPackageInfo(entry.getPackageName(), 0);
             } catch (NameNotFoundException e) {
+                e.printStackTrace();
             	//NOP -- shouldn't ever happen, we are iterating a list of installed packages
             }
-            
+
             String apkName = packageInfo.packageName + "_" + packageInfo.versionCode +".apk";
             File apkFile = new File(repoDir, apkName);
-            
+
             if(apkFile.exists())
             	entry.setEnabled(true);
         }
