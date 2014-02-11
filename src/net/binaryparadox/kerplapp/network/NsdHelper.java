@@ -17,28 +17,29 @@ package net.binaryparadox.kerplapp.network;
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.net.nsd.NsdServiceInfo;
 import android.net.nsd.NsdManager;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class NsdHelper {
 
-    Context mContext;
-
-    NsdManager mNsdManager;
-    NsdManager.ResolveListener mResolveListener;
-    NsdManager.DiscoveryListener mDiscoveryListener;
-    NsdManager.RegistrationListener mRegistrationListener;
-
     public static final String SERVICE_TYPE = "_http._tcp.";
-
     public static final String TAG = "NsdHelper";
-    public String mServiceName = "Kerplapp";
+
+    private final SharedPreferences prefs;
+    private final Context mContext;
+    private String mServiceName;
+
+    private NsdManager mNsdManager;
+    private NsdManager.RegistrationListener mRegistrationListener;
 
     public NsdHelper(Context context) {
         mContext = context;
+        prefs = PreferenceManager.getDefaultSharedPreferences(mContext);
         mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
     }
 
@@ -54,7 +55,7 @@ public class NsdHelper {
                 mServiceName = serviceInfo.getServiceName();
                 Log.i(TAG, "Service registered with name "+ mServiceName);
             }
-            
+
             @Override
             public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
               Log.e(TAG, "Error registering service. Error code: "+ errorCode);
@@ -64,24 +65,24 @@ public class NsdHelper {
             public void onServiceUnregistered(NsdServiceInfo serviceInfo) {
               Log.i(TAG, "Successfully unregistered service");
             }
-            
+
             @Override
             public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
               Log.e(TAG, "Unable to unregister service. Error code: "+ errorCode);
             }
-            
         };
     }
 
     public void registerService(int port) {
+        String desiredServiceName = prefs.getString("repo_name", "Kerplapp");
         NsdServiceInfo serviceInfo  = new NsdServiceInfo();
+
         serviceInfo.setPort(port);
-        serviceInfo.setServiceName(mServiceName);
+        serviceInfo.setServiceName(desiredServiceName);
         serviceInfo.setServiceType(SERVICE_TYPE);
-        
+
         mNsdManager.registerService(
                 serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
-        
     }
     
     public void tearDown() {

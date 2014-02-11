@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
+    <EditTextPreference
+        android:defaultValue="Kerplapp"
+        android:inputType="text"
+        android:key="repo_name"
+        android:summary="The name of the Kerplapp repo and network service."
+        android:title="Repo/service name" />
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="use_nsd"
+        android:summary="Advertise the Kerplapp repo on the local network using network service discovery."
+        android:title="Advertise repo" />
+
     <CheckBoxPreference
         android:defaultValue="false"
         android:key="use_https"
