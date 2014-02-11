@@ -496,9 +496,11 @@ public class KerplappRepo {
         int repoMaxAge = Float.valueOf(prefs.getString("max_repo_age_days",
                 DEFAULT_REPO_MAX_AGE_DAYS)).intValue();
 
+        String repoName = prefs.getString("repo_name", "Kerplapp");
+
         Element repo = doc.createElement("repo");
         repo.setAttribute("icon", "blah.png");
-        repo.setAttribute("name", "Kerplapp on " + ipAddressString);
+        repo.setAttribute("name", repoName + " on " + ipAddressString);
         repo.setAttribute("url", uriString);
         long timestamp = System.currentTimeMillis() / 1000L;
         repo.setAttribute("timestamp", String.valueOf(timestamp));

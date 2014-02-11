@@ -349,6 +349,7 @@ public class KerplappActivity extends Activity {
     private void startWebServer() {
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         final boolean useHttps = prefs.getBoolean("use_https", false);
+        final boolean useNSD   = prefs.getBoolean("use_nsd", true);
 
         Runnable webServer = new Runnable() {
             @Override
@@ -363,7 +364,7 @@ public class KerplappActivity extends Activity {
                     kerplappSrv.enableHTTPS(keyStore);
                 }
 
-                if(nsdHelper != null)
+                if(nsdHelper != null && useNSD)
                 {
                     Log.i(TAG, "Registering Kerplapp service with NSD");
                     nsdHelper.registerService(port);
