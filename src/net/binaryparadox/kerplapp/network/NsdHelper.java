@@ -27,7 +27,9 @@ import android.util.Log;
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class NsdHelper {
 
-    public static final String SERVICE_TYPE = "_http._tcp.";
+    public static final String HTTP_SERVICE_TYPE =  "_fdroid._tcp.";
+    public static final String HTTPS_SERVICE_TYPE = "_fdroids._tcp.";
+
     public static final String TAG = "NsdHelper";
 
     private final SharedPreferences prefs;
@@ -77,14 +79,17 @@ public class NsdHelper {
         String desiredServiceName = prefs.getString("repo_name", "Kerplapp");
         NsdServiceInfo serviceInfo  = new NsdServiceInfo();
 
+        boolean httpsEnabled = prefs.getBoolean("use_https", false);
+
+        serviceInfo.setServiceType(httpsEnabled ? HTTPS_SERVICE_TYPE : HTTP_SERVICE_TYPE);
         serviceInfo.setPort(port);
         serviceInfo.setServiceName(desiredServiceName);
-        serviceInfo.setServiceType(SERVICE_TYPE);
+
 
         mNsdManager.registerService(
                 serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
     }
-    
+
     public void tearDown() {
       try{
         mNsdManager.unregisterService(mRegistrationListener);
