@@ -251,20 +251,20 @@ public class KerplappActivity extends Activity {
         // to simplify having to detect when that preference changes.
         try {
             keyStore.setupHTTPSCertificate(ipAddressString);
-        } catch (UnrecoverableKeyException e1) {
-            e1.printStackTrace();
-        } catch (CertificateException e1) {
-            e1.printStackTrace();
-        } catch (OperatorCreationException e1) {
-            e1.printStackTrace();
-        } catch (KeyStoreException e1) {
-            e1.printStackTrace();
-        } catch (NoSuchAlgorithmException e1) {
-            e1.printStackTrace();
-        } catch (FileNotFoundException e1) {
-            e1.printStackTrace();
-        } catch (IOException e1) {
-            e1.printStackTrace();
+        } catch (UnrecoverableKeyException e) {
+            Log.e(TAG, e.getMessage());
+        } catch (CertificateException e) {
+            Log.e(TAG, e.getMessage());
+        } catch (OperatorCreationException e) {
+            Log.e(TAG, e.getMessage());
+        } catch (KeyStoreException e) {
+            Log.e(TAG, e.getMessage());
+        } catch (NoSuchAlgorithmException e) {
+            Log.e(TAG, e.getMessage());
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, e.getMessage());
+        } catch (IOException e) {
+            Log.e(TAG, e.getMessage());
         }
 
         // the required NFC API was added in 4.0 aka Ice Cream Sandwich
@@ -305,7 +305,7 @@ public class KerplappActivity extends Activity {
         try {
             return qrCodeEncoder.encodeAsBitmap();
         } catch (WriterException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
         return null;
     }
@@ -330,7 +330,7 @@ public class KerplappActivity extends Activity {
                 }
                 Log.i(TAG, "2");
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             }
             return null;
         }
@@ -352,6 +352,7 @@ public class KerplappActivity extends Activity {
         final boolean useNSD   = prefs.getBoolean("use_nsd", true);
 
         Runnable webServer = new Runnable() {
+            @SuppressLint("HandlerLeak") //Tell Eclipse this is not a leak because of Looper use.
             @Override
             public void run() {
                 final KerplappHTTPD kerplappSrv = new KerplappHTTPD(ipAddressString,
@@ -387,7 +388,7 @@ public class KerplappActivity extends Activity {
                 try {
                     kerplappSrv.start();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, e.getMessage());
                 }
                 Looper.loop(); // start the message receiving loop
             }
