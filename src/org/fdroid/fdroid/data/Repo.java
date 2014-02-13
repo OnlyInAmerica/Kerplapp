@@ -82,14 +82,6 @@ public class Repo {
         return tempName;
     }
 
-    private static int toInt(Integer value) {
-        if (value == null) {
-            return 0;
-        } else {
-            return value;
-        }
-    }
-
     public void setValues(ContentValues values) {
         // not used in Kerplapp
     }

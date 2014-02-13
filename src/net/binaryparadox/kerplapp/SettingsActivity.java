@@ -7,6 +7,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 
+@SuppressWarnings("deprecation") //See Task #2955
 public class SettingsActivity extends PreferenceActivity
         implements OnSharedPreferenceChangeListener {
 

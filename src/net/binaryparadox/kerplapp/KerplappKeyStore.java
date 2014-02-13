@@ -1,6 +1,8 @@
 
 package net.binaryparadox.kerplapp;
 
+import android.util.Log;
+
 import org.spongycastle.asn1.ASN1Sequence;
 import org.spongycastle.asn1.x500.X500Name;
 import org.spongycastle.asn1.x509.GeneralName;
@@ -55,6 +57,8 @@ public class KerplappKeyStore {
         Security.insertProviderAt(
                 new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
     }
+
+    private static final String TAG = "KerplappKeyStore";
 
     public static final String INDEX_CERT_ALIAS = "fdroid";
     public static final String HTTP_CERT_ALIAS = "https";
@@ -151,21 +155,21 @@ public class KerplappKeyStore {
             zipSigner.signZip(input.getAbsolutePath(), output.getAbsolutePath());
 
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         } catch (InstantiationException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         } catch (KeyStoreException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         } catch (UnrecoverableKeyException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         } catch (GeneralSecurityException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
     }
 
@@ -205,7 +209,7 @@ public class KerplappKeyStore {
                 formatter.close();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
         }
 
         return ret;

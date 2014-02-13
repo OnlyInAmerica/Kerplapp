@@ -45,17 +45,17 @@ public class KerplappApplication extends Application {
             try {
                 keystore = new KerplappKeyStore(keyStoreFile);
             } catch (UnrecoverableKeyException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             } catch (KeyStoreException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             } catch (CertificateException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             } catch (OperatorCreationException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.e(TAG, e.getMessage());
             }
         }
     }
