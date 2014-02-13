@@ -29,6 +29,7 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.support.v4.content.AsyncTaskLoader;
+import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ import java.util.List;
 
 public class AppListLoader extends AsyncTaskLoader<List<AppEntry>> {
 
+    private static final String TAG = "AppListLoader";
     InterestingConfigChanges lastConfig = new InterestingConfigChanges();
     public final PackageManager pm;
 
@@ -99,8 +101,8 @@ public class AppListLoader extends AsyncTaskLoader<List<AppEntry>> {
             try {
             	packageInfo = pm.getPackageInfo(entry.getPackageName(), 0);
             } catch (NameNotFoundException e) {
-                e.printStackTrace();
-            	//NOP -- shouldn't ever happen, we are iterating a list of installed packages
+                Log.e(TAG, e.getMessage());
+                //NOP -- shouldn't ever happen, we are iterating a list of installed packages
             }
 
             String apkName = packageInfo.packageName + "_" + packageInfo.versionCode +".apk";
