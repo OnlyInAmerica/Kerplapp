@@ -18,8 +18,8 @@ package net.binaryparadox.kerplapp.network;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.nsd.NsdServiceInfo;
 import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -27,7 +27,10 @@ import android.util.Log;
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class NsdHelper {
 
-    public static final String SERVICE_TYPE = "_http._tcp.";
+    // these match FDroid's custom URI schemes
+    public static final String HTTP_SERVICE_TYPE =  "_fdroidrepo._tcp.";
+    public static final String HTTPS_SERVICE_TYPE = "_fdroidrepos._tcp.";
+
     public static final String TAG = "NsdHelper";
 
     private final SharedPreferences prefs;
@@ -77,14 +80,17 @@ public class NsdHelper {
         String desiredServiceName = prefs.getString("repo_name", "Kerplapp");
         NsdServiceInfo serviceInfo  = new NsdServiceInfo();
 
+        boolean httpsEnabled = prefs.getBoolean("use_https", false);
+
+        serviceInfo.setServiceType(httpsEnabled ? HTTPS_SERVICE_TYPE : HTTP_SERVICE_TYPE);
         serviceInfo.setPort(port);
         serviceInfo.setServiceName(desiredServiceName);
-        serviceInfo.setServiceType(SERVICE_TYPE);
+
 
         mNsdManager.registerService(
                 serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
     }
-    
+
     public void tearDown() {
       try{
         mNsdManager.unregisterService(mRegistrationListener);
