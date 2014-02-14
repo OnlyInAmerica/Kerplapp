@@ -22,6 +22,7 @@ import android.util.Log;
 
 import net.binaryparadox.kerplapp.KerplappApplication;
 import net.binaryparadox.kerplapp.KerplappKeyStore;
+import net.binaryparadox.kerplapp.SettingsActivity;
 import net.binaryparadox.kerplapp.Utils;
 
 import org.w3c.dom.Document;
@@ -496,7 +497,7 @@ public class KerplappRepo {
         int repoMaxAge = Float.valueOf(prefs.getString("max_repo_age_days",
                 DEFAULT_REPO_MAX_AGE_DAYS)).intValue();
 
-        String repoName = prefs.getString("repo_name", "Kerplapp");
+        String repoName = prefs.getString("repo_name", SettingsActivity.getDefaultRepoName());
 
         Element repo = doc.createElement("repo");
         repo.setAttribute("icon", "blah.png");
@@ -508,7 +509,7 @@ public class KerplappRepo {
         rootElement.appendChild(repo);
 
         Element repoDesc = doc.createElement("description");
-        repoDesc.setTextContent("A repo generated from apps installed on an Android Device");
+        repoDesc.setTextContent("A repo generated from apps installed on " + repoName);
         repo.appendChild(repoDesc);
 
         SimpleDateFormat dateToStr = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
@@ -557,11 +558,11 @@ public class KerplappRepo {
             application.appendChild(license);
 
             Element categories = doc.createElement("categories");
-            categories.setTextContent("Kerplapp," + ipAddressString);
+            categories.setTextContent("Kerplapp," + repoName);
             application.appendChild(categories);
 
             Element category = doc.createElement("category");
-            category.setTextContent("Kerplapp," + ipAddressString);
+            category.setTextContent("Kerplapp," + repoName);
             application.appendChild(category);
 
             Element web = doc.createElement("web");

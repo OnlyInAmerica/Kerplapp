@@ -24,6 +24,8 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import net.binaryparadox.kerplapp.SettingsActivity;
+
 @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
 public class NsdHelper {
 
@@ -77,7 +79,8 @@ public class NsdHelper {
     }
 
     public void registerService(int port) {
-        String desiredServiceName = prefs.getString("repo_name", "Kerplapp");
+        String desiredServiceName = prefs.getString("repo_name",
+                SettingsActivity.getDefaultRepoName());
         NsdServiceInfo serviceInfo  = new NsdServiceInfo();
 
         boolean httpsEnabled = prefs.getBoolean("use_https", false);

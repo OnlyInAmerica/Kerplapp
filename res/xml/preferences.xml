@@ -2,10 +2,9 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <EditTextPreference
-        android:defaultValue="Kerplapp"
         android:inputType="text"
         android:key="repo_name"
-        android:summary="The name of the Kerplapp repo and network service."
+        android:summary="@string/local_repo_name_summary"
         android:title="Repo/service name" />
 
     <CheckBoxPreference

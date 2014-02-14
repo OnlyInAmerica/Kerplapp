@@ -20,5 +20,6 @@
     <string name="fingerprint">Fingerprint:</string>
     <string name="icon">icon</string>
     <string name="no_applications_found">No applications found</string>
+    <string name="local_repo_name_summary">The name of the Kerplapp repo and network service.</string>
 
 </resources>
