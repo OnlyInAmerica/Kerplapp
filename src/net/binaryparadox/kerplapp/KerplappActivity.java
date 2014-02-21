@@ -10,7 +10,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
-import android.graphics.Point;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -26,7 +25,6 @@ import android.os.Message;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.Display;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -35,11 +33,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
-
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.WriterException;
-import com.google.zxing.encode.Contents;
-import com.google.zxing.encode.QRCodeEncoder;
 
 import net.binaryparadox.kerplapp.network.KerplappHTTPD;
 import net.binaryparadox.kerplapp.network.NsdHelper;
@@ -56,7 +49,6 @@ import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Locale;
 
-@SuppressLint("DefaultLocale")
 public class KerplappActivity extends Activity {
     private static final String TAG = "KerplappActivity";
     private ProgressDialog repoProgress;
@@ -231,7 +223,8 @@ public class KerplappActivity extends Activity {
         kerplappRepo.setUriString(repo.address);
         kerplappRepo.writeIndexPage(fdroidrepoUri);
         // set URL to UPPER for compact QR Code, FDroid will translate it back
-        Bitmap qrBitmap = generateQrCode(fdroidrepoUri.toString().toUpperCase(Locale.ENGLISH));
+        Bitmap qrBitmap = Utils.generateQrCode(this,
+                fdroidrepoUri.toString().toUpperCase(Locale.ENGLISH));
         repoQrCodeImageView.setImageBitmap(qrBitmap);
 
         TextView wifiNetworkNameTextView = (TextView) findViewById(R.id.wifiNetworkName);
@@ -277,37 +270,7 @@ public class KerplappActivity extends Activity {
         nfcAdapter.setNdefPushMessage(new NdefMessage(new NdefRecord[] {
                 NdefRecord.createUri(getSharingUri()),
         }), this);
-    }
-
-    @SuppressWarnings("deprecation")
-    @SuppressLint("NewApi")
-    private Bitmap generateQrCode(String qrData) {
-        Display display = getWindowManager().getDefaultDisplay();
-        Point outSize = new Point();
-        int x, y, qrCodeDimension;
-        /* lame, got to use both the new and old APIs here */
-        if (android.os.Build.VERSION.SDK_INT >= 13) {
-            display.getSize(outSize);
-            x = outSize.x;
-            y = outSize.y;
-        } else {
-            x = display.getWidth();
-            y = display.getHeight();
         }
-        if (outSize.x < outSize.y)
-            qrCodeDimension = x;
-        else
-            qrCodeDimension = y;
-        Log.i(TAG, "generating QRCode Bitmap of " + qrCodeDimension + "x" + qrCodeDimension);
-        QRCodeEncoder qrCodeEncoder = new QRCodeEncoder(qrData, null,
-                Contents.Type.TEXT, BarcodeFormat.QR_CODE.toString(), qrCodeDimension);
-
-        try {
-            return qrCodeEncoder.encodeAsBitmap();
-        } catch (WriterException e) {
-            Log.e(TAG, e.getMessage());
-        }
-        return null;
     }
 
     public class WaitForWifiAsyncTask extends AsyncTask<Void, Void, Void> {

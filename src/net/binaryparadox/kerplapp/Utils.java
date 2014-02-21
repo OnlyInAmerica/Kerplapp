@@ -1,7 +1,18 @@
 
 package net.binaryparadox.kerplapp;
 
+import android.annotation.TargetApi;
+import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.Point;
+import android.os.Build;
 import android.util.Log;
+import android.view.Display;
+
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.WriterException;
+import com.google.zxing.encode.Contents;
+import com.google.zxing.encode.QRCodeEncoder;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -81,5 +92,37 @@ public class Utils {
     public static String toHexString(byte[] bytes) {
         BigInteger bi = new BigInteger(1, bytes);
         return String.format("%0" + (bytes.length << 1) + "X", bi);
+    }
+
+
+    @SuppressWarnings("deprecation")
+    @TargetApi(13)
+    public static Bitmap generateQrCode(Activity activity, String qrData) {
+        Display display = activity.getWindowManager().getDefaultDisplay();
+        Point outSize = new Point();
+        int x, y, qrCodeDimension;
+        /* lame, got to use both the new and old APIs here */
+        if (Build.VERSION.SDK_INT > 12) {
+            display.getSize(outSize);
+            x = outSize.x;
+            y = outSize.y;
+        } else {
+            x = display.getWidth();
+            y = display.getHeight();
+        }
+        if (outSize.x < outSize.y)
+            qrCodeDimension = x;
+        else
+            qrCodeDimension = y;
+        Log.i(TAG, "generating QRCode Bitmap of " + qrCodeDimension + "x" + qrCodeDimension);
+        QRCodeEncoder qrCodeEncoder = new QRCodeEncoder(qrData, null,
+                Contents.Type.TEXT, BarcodeFormat.QR_CODE.toString(), qrCodeDimension);
+
+        try {
+            return qrCodeEncoder.encodeAsBitmap();
+        } catch (WriterException e) {
+            Log.e(TAG, e.getMessage());
+        }
+        return null;
     }
 }
