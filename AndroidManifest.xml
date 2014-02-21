@@ -29,6 +29,7 @@
             android:name=".KerplappActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/app_name"
+            android:launchMode="singleInstance"
             android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -44,7 +45,9 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".KerplappActivity" />
         </activity>
-        <activity android:name="SettingsActivity" />
+        <activity android:name=".SettingsActivity" />
+        <activity android:name=".QrWizardDownloadActivity" />
+        <activity android:name=".QrWizardWifiNetworkActivity" />
     </application>
 
 </manifest>

@@ -7,10 +7,15 @@
         android:showAsAction="ifRoom|withText"
         android:title="Setup Repo"/>
     <item
+        android:id="@+id/menu_send_fdroid_via_wifi"
+        android:icon="@android:drawable/arrow_up_float"
+        android:showAsAction="never"
+        android:title="Send FDroid via WiFi..."/>
+    <item
         android:id="@+id/menu_send_to_fdroid"
         android:icon="@android:drawable/arrow_up_float"
         android:showAsAction="never"
-        android:title="Send to Local F-Droid"/>
+        android:title="Send to Local FDroid"/>
     <item
         android:id="@+id/menu_settings"
         android:icon="@android:drawable/ic_menu_preferences"

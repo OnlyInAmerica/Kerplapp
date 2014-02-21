@@ -120,6 +120,13 @@ public class KerplappActivity extends Activity {
             case R.id.menu_setup_repo:
                 startActivityForResult(new Intent(this, AppSelectActivity.class), SET_IP_ADDRESS);
                 return true;
+            case R.id.menu_send_fdroid_via_wifi:
+                if (!repoSwitch.isChecked()) {
+                    startWebServer();
+                    repoSwitch.setChecked(true);
+                }
+                startActivity(new Intent(this, QrWizardWifiNetworkActivity.class));
+                return true;
             case R.id.menu_send_to_fdroid:
                 if (repo.address == null) {
                     Toast.makeText(this, "The repo is not configured yet!", Toast.LENGTH_LONG)
