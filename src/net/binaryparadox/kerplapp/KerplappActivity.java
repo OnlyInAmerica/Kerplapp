@@ -75,9 +75,11 @@ public class KerplappActivity extends Activity {
 
         repoSwitch = (ToggleButton) findViewById(R.id.repoSwitch);
         wifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
-        
-        nsdHelper = new NsdHelper(this);
-        nsdHelper.initializeNsd();
+
+        if (Build.VERSION.SDK_INT > 15) {
+            nsdHelper = new NsdHelper(this);
+            nsdHelper.initializeNsd();
+        }
     }
 
     @Override
@@ -261,15 +263,13 @@ public class KerplappActivity extends Activity {
         }
 
         // the required NFC API was added in 4.0 aka Ice Cream Sandwich
-        if (Build.VERSION.SDK_INT < 14) {
-            return;
-        }
-        NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
-        if (nfcAdapter == null)
-            return;
-        nfcAdapter.setNdefPushMessage(new NdefMessage(new NdefRecord[] {
-                NdefRecord.createUri(getSharingUri()),
-        }), this);
+        if (Build.VERSION.SDK_INT > 13) {
+            NfcAdapter nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+            if (nfcAdapter == null)
+                return;
+            nfcAdapter.setNdefPushMessage(new NdefMessage(new NdefRecord[] {
+                    NdefRecord.createUri(getSharingUri()),
+            }), this);
         }
     }
 
