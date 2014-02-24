@@ -55,9 +55,6 @@ public class KerplappActivity extends Activity {
 
     private WifiManager wifiManager;
     private ToggleButton repoSwitch;
-    private int ipAddress = 0;
-    private int port = 8888;
-    private String ipAddressString = null;
     private Repo repo = new Repo();
 
     private int SET_IP_ADDRESS = 0x7345;
@@ -88,7 +85,7 @@ public class KerplappActivity extends Activity {
         int wifiState = wifiManager.getWifiState();
         if (wifiState == WifiManager.WIFI_STATE_ENABLED) {
             WifiInfo wifiInfo = wifiManager.getConnectionInfo();
-            if (ipAddress != wifiInfo.getIpAddress()) {
+            if (KerplappApplication.ipAddress != wifiInfo.getIpAddress()) {
                 setIpAddressFromWifi();
                 if (repoSwitch.isChecked()) {
                     stopWebServer();
@@ -199,11 +196,13 @@ public class KerplappActivity extends Activity {
         String ssid = wifiInfo.getSSID().replaceAll("^\"(.*)\"$", "$1");
         KerplappKeyStore keyStore = appCtx.getKeyStore();
 
-        ipAddress = wifiInfo.getIpAddress();
-        ipAddressString = String.format(Locale.ENGLISH, "%d.%d.%d.%d",
-                (ipAddress & 0xff), (ipAddress >> 8 & 0xff),
-                (ipAddress >> 16 & 0xff), (ipAddress >> 24 & 0xff));
-        kerplappRepo.setIpAddressString(ipAddressString);
+        KerplappApplication.ipAddress = wifiInfo.getIpAddress();
+        KerplappApplication.ipAddressString = String.format(Locale.ENGLISH, "%d.%d.%d.%d",
+                (KerplappApplication.ipAddress & 0xff),
+                (KerplappApplication.ipAddress >> 8 & 0xff),
+                (KerplappApplication.ipAddress >> 16 & 0xff),
+                (KerplappApplication.ipAddress >> 24 & 0xff));
+        kerplappRepo.setIpAddressString(KerplappApplication.ipAddressString);
 
         String scheme;
         if (useHttps)
@@ -211,7 +210,7 @@ public class KerplappActivity extends Activity {
         else
             scheme = "http";
         repo.address = String.format(Locale.ENGLISH, "%s://%s:%d/fdroid/repo",
-                scheme, ipAddressString, port);
+                scheme, KerplappApplication.ipAddressString, KerplappApplication.port);
         repo.fingerprint = keyStore.getFingerprint();
 
         // the fingerprint is not useful on the button label
@@ -245,7 +244,7 @@ public class KerplappActivity extends Activity {
         // ipAddressString. We'll generate it even if useHttps is false
         // to simplify having to detect when that preference changes.
         try {
-            keyStore.setupHTTPSCertificate(ipAddressString);
+            keyStore.setupHTTPSCertificate(KerplappApplication.ipAddressString);
         } catch (UnrecoverableKeyException e) {
             Log.e(TAG, e.getMessage());
         } catch (CertificateException e) {
@@ -284,12 +283,12 @@ public class KerplappActivity extends Activity {
                     Log.i(TAG, "ever recover from sleep?");
                 }
                 Log.i(TAG, "0");
-                ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+                KerplappApplication.ipAddress = wifiManager.getConnectionInfo().getIpAddress();
                 Log.i(TAG, "1");
-                while (ipAddress == 0) {
+                while (KerplappApplication.ipAddress == 0) {
                     Log.i(TAG, "waiting for an IP address...");
                     Thread.sleep(3000);
-                    ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+                    KerplappApplication.ipAddress = wifiManager.getConnectionInfo().getIpAddress();
                 }
                 Log.i(TAG, "2");
             } catch (InterruptedException e) {
@@ -300,9 +299,9 @@ public class KerplappActivity extends Activity {
 
         @Override
         protected void onPostExecute(Void result) {
-            Log.i(TAG, "onPostExecute " + ipAddress);
+            Log.i(TAG, "onPostExecute " + KerplappApplication.ipAddress);
             repoSwitch.setChecked(false);
-            if (wifiManager.isWifiEnabled() && ipAddress != 0) {
+            if (wifiManager.isWifiEnabled() && KerplappApplication.ipAddress != 0) {
                 setIpAddressFromWifi();
                 wireRepoSwitchToWebServer();
             }
@@ -318,8 +317,9 @@ public class KerplappActivity extends Activity {
             @SuppressLint("HandlerLeak") //Tell Eclipse this is not a leak because of Looper use.
             @Override
             public void run() {
-                final KerplappHTTPD kerplappSrv = new KerplappHTTPD(ipAddressString,
-                        port, getFilesDir(), false);
+                final KerplappHTTPD kerplappSrv = new KerplappHTTPD(
+                        KerplappApplication.ipAddressString,
+                        KerplappApplication.port, getFilesDir(), false);
 
                 if (useHttps)
                 {
@@ -331,7 +331,7 @@ public class KerplappActivity extends Activity {
                 if(nsdHelper != null && useNSD)
                 {
                     Log.i(TAG, "Registering Kerplapp service with NSD");
-                    nsdHelper.registerService(port);
+                    nsdHelper.registerService(KerplappApplication.port);
                 }
 
                 Looper.prepare(); // must be run before creating a Handler

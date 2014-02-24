@@ -21,6 +21,11 @@ public class KerplappApplication extends Application {
     private static final String keyStoreDirName  = "keystore";
     private static final String keyStoreFileName = "kerplapp.bks";
 
+    // the local repo on this device
+    static int ipAddress = 0;
+    static int port = 8888;
+    static String ipAddressString = null;
+
     private KerplappRepo     repo     = null;
     private KerplappKeyStore keystore = null;
 
