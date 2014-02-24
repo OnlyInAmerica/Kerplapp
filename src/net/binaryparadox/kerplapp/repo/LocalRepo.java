@@ -62,8 +62,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-public class KerplappRepo {
-    private static final String TAG = "KerplappRepo";
+public class LocalRepo {
+    private static final String TAG = "LocalRepo";
 
     // For ref, official F-droid repo presently uses a maxage of 14 days
     private static final String DEFAULT_REPO_MAX_AGE_DAYS = "14";
@@ -86,7 +86,7 @@ public class KerplappRepo {
     public File repoDir = null;
     public File iconsDir = null;
 
-    public KerplappRepo(Context c) {
+    public LocalRepo(Context c) {
         webRoot = c.getFilesDir();
         pm = c.getPackageManager();
         appCtx = (KerplappApplication) c.getApplicationContext();

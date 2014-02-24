@@ -5,7 +5,7 @@ import android.app.Application;
 import android.content.Context;
 import android.util.Log;
 
-import net.binaryparadox.kerplapp.repo.KerplappRepo;
+import net.binaryparadox.kerplapp.repo.LocalRepo;
 
 import org.spongycastle.operator.OperatorCreationException;
 
@@ -18,7 +18,7 @@ import java.security.cert.CertificateException;
 
 public class KerplappApplication extends Application {
     private static final String TAG = "KerplappApplication";
-    private static final String keyStoreDirName  = "keystore";
+    private static final String keyStoreDirName = "keystore";
     private static final String keyStoreFileName = "kerplapp.bks";
 
     // the local repo on this device
@@ -26,7 +26,7 @@ public class KerplappApplication extends Application {
     static int port = 8888;
     static String ipAddressString = null;
 
-    private KerplappRepo     repo     = null;
+    private LocalRepo localRepo = null;
     private KerplappKeyStore keystore = null;
 
     @Override
@@ -36,11 +36,11 @@ public class KerplappApplication extends Application {
         File appKeyStoreDir = getDir(keyStoreDirName, Context.MODE_PRIVATE);
         File keyStoreFile = new File(appKeyStoreDir, keyStoreFileName);
 
-        if (repo == null) {
-            repo = new KerplappRepo(getApplicationContext());
+        if (localRepo == null) {
+            localRepo = new LocalRepo(getApplicationContext());
 
             try {
-                repo.init();
+                localRepo.init();
             } catch (Exception e) {
                 Log.e(TAG, e.getMessage());
             }
@@ -65,8 +65,8 @@ public class KerplappApplication extends Application {
         }
     }
 
-    public KerplappRepo getKerplappRepo() {
-        return repo;
+    public LocalRepo getLocalRepo() {
+        return localRepo;
     }
 
     public KerplappKeyStore getKeyStore() {

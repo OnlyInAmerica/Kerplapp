@@ -13,7 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
-import net.binaryparadox.kerplapp.repo.KerplappRepo;
+import net.binaryparadox.kerplapp.repo.LocalRepo;
 
 public class AppSelectActivity extends FragmentActivity {
     private final String TAG = "AppSelectActivity";
@@ -71,7 +71,7 @@ public class AppSelectActivity extends FragmentActivity {
 
         @Override
         protected Void doInBackground(Void... params) {
-            final KerplappRepo repo = ((KerplappApplication) getApplication()).getKerplappRepo();
+            final LocalRepo repo = ((KerplappApplication) getApplication()).getLocalRepo();
             try {
                 publishProgress(getString(R.string.deleting_repo));
                 repo.deleteRepo();

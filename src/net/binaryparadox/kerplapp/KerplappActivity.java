@@ -36,7 +36,7 @@ import android.widget.ToggleButton;
 
 import net.binaryparadox.kerplapp.network.KerplappHTTPD;
 import net.binaryparadox.kerplapp.network.NsdHelper;
-import net.binaryparadox.kerplapp.repo.KerplappRepo;
+import net.binaryparadox.kerplapp.repo.LocalRepo;
 
 import org.fdroid.fdroid.data.Repo;
 import org.spongycastle.operator.OperatorCreationException;
@@ -197,7 +197,7 @@ public class KerplappActivity extends Activity {
         final boolean useHttps = prefs.getBoolean("use_https", false);
 
         final KerplappApplication appCtx = (KerplappApplication) getApplication();
-        final KerplappRepo kerplappRepo = appCtx.getKerplappRepo();
+        final LocalRepo kerplappRepo = appCtx.getLocalRepo();
 
         WifiInfo wifiInfo = wifiManager.getConnectionInfo();
         String ssid = wifiInfo.getSSID().replaceAll("^\"(.*)\"$", "$1");
