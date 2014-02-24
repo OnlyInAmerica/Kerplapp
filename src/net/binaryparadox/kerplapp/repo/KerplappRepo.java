@@ -1,6 +1,7 @@
 
 package net.binaryparadox.kerplapp.repo;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
@@ -300,6 +301,7 @@ public class KerplappRepo {
         public void processedApp(String packageName, int index, int total);
     }
 
+    @TargetApi(9)
     public App addApp(String packageName) {
         ApplicationInfo appInfo;
         PackageInfo packageInfo;
@@ -317,8 +319,13 @@ public class KerplappRepo {
         app.summary = (String) appInfo.loadDescription(pm);
         app.icon = getIconFile(packageName, packageInfo.versionCode).getName();
         app.id = appInfo.packageName;
-        app.added = new Date(packageInfo.firstInstallTime);
-        app.lastUpdated = new Date(packageInfo.lastUpdateTime);
+        if (Build.VERSION.SDK_INT > 8) {
+            app.added = new Date(packageInfo.firstInstallTime);
+            app.lastUpdated = new Date(packageInfo.lastUpdateTime);
+        } else {
+            app.added = new Date(System.currentTimeMillis());
+            app.lastUpdated = app.added;
+        }
         app.appInfo = appInfo;
         app.apks = new ArrayList<Apk>();
 
@@ -330,7 +337,7 @@ public class KerplappRepo {
         apk.vercode = packageInfo.versionCode;
         apk.detail_hashType = "sha256";
         apk.detail_hash = Utils.getBinaryHash(apkFile, apk.detail_hashType);
-        apk.added = new Date(packageInfo.lastUpdateTime);
+        apk.added = app.added;
         apk.apkSourcePath = apkFile.getAbsolutePath();
         apk.apkSourceName = apkFile.getName();
         apk.minSdkVersion = appInfo.targetSdkVersion;
@@ -485,6 +492,8 @@ public class KerplappRepo {
         return new File(iconsDir, packageName + "_" + versionCode + ".png");
     }
 
+    // TODO this needs to be ported to < android-8
+    @TargetApi(8)
     public void writeIndexXML() throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
