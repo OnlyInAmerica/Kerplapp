@@ -67,6 +67,8 @@ public class KerplappKeyStore {
     private static final String DEFAULT_KEY_ALGO = "RSA";
     private static final int DEFAULT_KEY_BITS = 2048;
 
+    private static final String DEFAULT_INDEX_CERT_INFO = "O=Kerplapp,OU=GuardianProject";
+
     private KeyStore keyStore;
     private KeyManager[] keyManagers;
     private File backingFile;
@@ -82,34 +84,44 @@ public class KerplappKeyStore {
         {
             // Init a new keystore with a blank passphrase
             keyStore.load(null, "".toCharArray());
+        } else {
+            keyStore.load(new FileInputStream(backingFile), "".toCharArray());
+        }
 
+        // If the keystore we loaded doesn't have an INDEX_CERT_ALIAS entry we need
+        // to generate a new random keypair and a self signed certificate for this
+        // slot
+        if(keyStore.getKey(INDEX_CERT_ALIAS, "".toCharArray()) == null)
+        {
             // Generate a random key pair to associate with the INDEX_CERT_ALIAS
             // certificate in the keystore. This keypair will be used for the
-            // HTTPS cert
-            // as well.
+            // HTTPS cert as well.
             KeyPair rndKeys = generateRandomKeypair();
 
             // Generate a self signed certificate for signing the index.jar
             // We can't generate the HTTPS certificate until we know what the IP
             // address will be to use for the CN field.
-            X500Name subject = new X500Name("O=Kerplapp,OU=GuardianProject");
+            X500Name subject = new X500Name(DEFAULT_INDEX_CERT_INFO);
             Certificate indexCert = generateSelfSignedCertChain(rndKeys, subject);
 
             addToStore(INDEX_CERT_ALIAS, rndKeys, indexCert);
-        } else {
-            keyStore.load(new FileInputStream(backingFile), "".toCharArray());
-
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory
-                    .getInstance(KeyManagerFactory.getDefaultAlgorithm());
-
-            keyManagerFactory.init(keyStore, "".toCharArray());
-            KeyManager defaultKeyManager = keyManagerFactory.getKeyManagers()[0];
-            KeyManager wrappedKeyManager = new KerplappKeyManager(
-                    (X509KeyManager) defaultKeyManager);
-            keyManagers = new KeyManager[] {
-                    wrappedKeyManager
-            };
         }
+
+
+        // Kerplapp uses its own KeyManager to to ensure the correct keystore
+        // alias is used for the correct purpose. With the default key manager
+        // it is not possible to specify that HTTP_CERT_ALIAS should be used for
+        // TLS and INDEX_CERT_ALIAS for signing the index.jar.
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory
+                .getInstance(KeyManagerFactory.getDefaultAlgorithm());
+
+        keyManagerFactory.init(keyStore, "".toCharArray());
+        KeyManager defaultKeyManager = keyManagerFactory.getKeyManagers()[0];
+        KeyManager wrappedKeyManager = new KerplappKeyManager(
+                (X509KeyManager) defaultKeyManager);
+        keyManagers = new KeyManager[] {
+                wrappedKeyManager
+        };
     }
 
     public void setupHTTPSCertificate(String hostname) throws CertificateException,
