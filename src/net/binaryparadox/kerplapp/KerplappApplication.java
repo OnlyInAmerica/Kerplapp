@@ -33,6 +33,9 @@ public class KerplappApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
+        //Apply the Google PRNG fixes to properly seed SecureRandom
+        PRNGFixes.apply();
+
         File appKeyStoreDir = getDir(keyStoreDirName, Context.MODE_PRIVATE);
         File keyStoreFile = new File(appKeyStoreDir, keyStoreFileName);
 
